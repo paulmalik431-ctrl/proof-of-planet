@@ -1,0 +1,11 @@
+{
+  "name": "eco-climate-os",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bun test tests/",
+    "dev": "bun scripts/dev.ts",
+    "audit": "bun scripts/ghost-audit.ts",
+    "build:web": "bun build supabase/functions/_core/ledger.ts --outfile web/js/ledger.js --format esm"
+  }
+}

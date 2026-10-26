@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Try ECO — Climate Action OS</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="nav"></div>
+<main class="wrap" style="padding-top:24px;padding-bottom:40px">
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <p class="label">Try it · same agent as WhatsApp</p>
+      <h2>Talk to ECO</h2>
+      <p>This chat runs the exact agent people use on WhatsApp: Muse Spark 1.3 with tools, SAM 3.1 and the same rules and ledger. Real checks, real (test) ECOIN.</p>
+      <ol class="small" style="padding-left:18px;display:grid;gap:6px">
+        <li>Say <b>yes</b> to the consent message.</li>
+        <li>Tell ECO what you did, in any language — “I planted a tree”, “Nimesafisha mtaa”, “J'ai recyclé des bouteilles”.</li>
+        <li>Send the photo it asks for with 📷, and your location with 📍.</li>
+        <li>ECO verifies with Meta AI and, if it checks out, pays you on the public ledger with an Evidence File link.</li>
+      </ol>
+      <p class="small muted">Photos you send here become part of a public Evidence File. Use your own photos. The demo has daily limits to keep costs fair.</p>
+      <p><a class="btn wa" id="wa" href="#" hidden>Or message ECO on WhatsApp</a></p>
+    </div>
+    <div class="phone">
+      <header><div class="av">ECO</div><div><b>ECO</b><div class="small" style="opacity:.85">Climate Action OS · Meta AI</div></div></header>
+      <div class="thread" id="thread"></div>
+      <form class="composer" id="form">
+        <button type="button" class="icon-btn" id="photo" title="Send a photo" aria-label="Send a photo">📷</button>
+        <button type="button" class="icon-btn" id="loc" title="Share location" aria-label="Share location">📍</button>
+        <input type="text" id="text" placeholder="Message" autocomplete="off" aria-label="Message">
+        <button class="icon-btn send" id="send" aria-label="Send">➤</button>
+        <input type="file" id="file" accept="image/*" hidden>
+      </form>
+    </div>
+  </div>
+</main>
+<script type="module">
+import { nav, fn, configured, el, WHATSAPP_NUMBER } from "./app.js";
+document.getElementById("nav").replaceWith(nav());
+if (WHATSAPP_NUMBER) { const a = document.getElementById("wa"); a.hidden = false; a.href = `https://wa.me/${WHATSAPP_NUMBER}?text=Hi%20ECO`; }
+
+const thread = document.getElementById("thread");
+const textIn = document.getElementById("text");
+let session;
+try { session = localStorage.getItem("eco_sim") || ""; } catch { session = ""; }
+if (!/^[a-z0-9]{16}$/.test(session)) {
+  session = [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  try { localStorage.setItem("eco_sim", session); } catch { /* private mode: session lasts for this page */ }
+}
+
+function format(text) {
+  const esc = text.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+  return esc.replace(/\*([^*\n]+)\*/g, "<b>$1</b>").replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+}
+function bubble(me, content) {
+  const b = el("div", { class: `msg${me ? " me" : ""}` });
+  if (typeof content === "string") b.innerHTML = format(content); else b.append(content);
+  thread.append(b);
+  thread.scrollTop = thread.scrollHeight;
+  return b;
+}
+let busy = false;
+async function send(payload, echo) {
+  if (busy) return;
+  if (!configured) { bubble(false, "The demo backend isn't connected in this copy of the site."); return; }
+  busy = true;
+  bubble(true, echo);
+  const typing = bubble(false, "ECO is checking…");
+  typing.classList.add("typing");
+  try {
+    const r = await fn("simulate", { session, ...payload });
+    typing.remove();
+    for (const m of r.replies ?? []) bubble(false, m);
+  } catch (e) {
+    typing.remove();
+    bubble(false, `Couldn't reach ECO (${e.message}). Try again.`);
+  } finally { busy = false; }
+}
+
+document.getElementById("form").onsubmit = (e) => {
+  e.preventDefault();
+  const t = textIn.value.trim();
+  if (!t) return;
+  textIn.value = "";
+  send({ text: t }, t);
+};
+
+async function shrink(file) {
+  const img = await createImageBitmap(file);
+  const scale = Math.min(1, 1280 / Math.max(img.width, img.height));
+  const c = el("canvas"); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.85));
+  const b64 = await new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(",")[1]); fr.readAsDataURL(blob); });
+  return { b64, url: URL.createObjectURL(blob) };
+}
+const fileIn = document.getElementById("file");
+document.getElementById("photo").onclick = () => fileIn.click();
+fileIn.onchange = async () => {
+  const f = fileIn.files?.[0];
+  fileIn.value = "";
+  if (!f) return;
+  const { b64, url } = await shrink(f);
+  send({ image: b64, mime: "image/jpeg", text: textIn.value.trim() || undefined }, el("img", { src: url, alt: "your photo" }));
+  textIn.value = "";
+};
+document.getElementById("loc").onclick = () => {
+  if (!navigator.geolocation) return bubble(false, "Your browser can't share a location.");
+  navigator.geolocation.getCurrentPosition(
+    (p) => send({ lat: p.coords.latitude, lng: p.coords.longitude }, `📍 Location shared (${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)})`),
+    () => bubble(false, "Location permission was denied. Allow location for this page to share where the action happened."),
+    { enableHighAccuracy: true, timeout: 15000 },
+  );
+};
+bubble(false, "Hi 👋 Say *hi* to start.");
+</script>
+</body>
+</html>

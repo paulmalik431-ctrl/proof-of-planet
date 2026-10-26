@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ECO — Climate Action OS</title>
+<meta name="description" content="ECO pays people for verified climate action over WhatsApp. Meta AI checks the evidence; a public ledger records every ECOIN.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="nav"></div>
+<main>
+  <section class="hero"><div class="wrap">
+    <p class="label">Evidence file · Climate Action OS</p>
+    <h1>Climate action<br>you can check.</h1>
+    <p class="lede">ECO pays people for verified climate action — trees planted, places cleaned, bottles recycled — through a WhatsApp chat in any language. Meta AI checks every photo. A public ledger shows every coin.</p>
+    <p style="display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn" href="try.html">Try it in your browser</a>
+      <a class="btn wa" id="wa" href="#" hidden>Message ECO on WhatsApp</a>
+      <a class="btn ghost" href="ledger.html">See the ledger</a>
+    </p>
+  </div></section>
+
+  <section><div class="wrap">
+    <p class="label">Live, from the public ledger</p>
+    <div class="grid g4" id="stats">
+      <div class="card stat"><b>—</b><span>verified actions</span></div>
+      <div class="card stat"><b>—</b><span>trees planted</span></div>
+      <div class="card stat"><b>—</b><span>items recycled</span></div>
+      <div class="card stat"><b>—</b><span>ECOIN paid</span></div>
+    </div>
+    <p class="small muted" id="stats-note" style="margin-top:10px"></p>
+  </div></section>
+
+  <section><div class="wrap grid g2">
+    <div>
+      <p class="label">How it works</p>
+      <h2>From a photo to a payment, on Meta</h2>
+    </div>
+    <ol class="steps">
+      <li><div><b>Report on WhatsApp.</b> “I planted a tree.” Text or photo, any language. <span class="model">WhatsApp Cloud API</span></div></li>
+      <li><div><b>The agent collects the evidence.</b> It asks for exactly what is missing — a photo, a before/after pair, your location. <span class="model">Muse Spark 1.3 · tool calling</span></div></li>
+      <li><div><b>Meta AI looks.</b> SAM 3.1 finds and counts saplings, litter, bottles and cans. Muse Spark answers fixed questions: same place? alive? edited? <span class="model">SAM 3.1</span> <span class="model">Muse Spark 1.3</span></div></li>
+      <li><div><b>Rules decide, not the model.</b> Verified, needs better evidence, or contradicted — with plain reasons. Unclear never becomes an accusation.</div></li>
+      <li><div><b>ECOIN is paid on a public ledger.</b> Each entry is hash-chained to the last. Anyone can re-check the whole chain in their browser.</div></li>
+    </ol>
+  </div></section>
+
+  <section><div class="wrap grid g2">
+    <div>
+      <p class="label">The design rule</p>
+      <h2>The AI can look and talk.<br>Only rules can pay.</h2>
+    </div>
+    <div>
+      <p>The agent has no tool that moves money. Its only route to a payment is <span class="mono">verify_claim</span>, which runs SAM 3.1 and Muse Spark, applies fixed rules, and credits the protocol's reward — never an amount the model chooses.</p>
+      <p>Reused photos, places that don't match, trees that died, or images that look AI-made are caught by the same checks. We attack our own system with Muse Image fakes and publish the results.</p>
+      <p><a href="https://github.com/paulmalik431-ctrl/eco-climate-os/blob/main/evals/README.md">Read the evaluation →</a></p>
+    </div>
+  </div></section>
+
+  <section><div class="wrap">
+    <p class="label">What ECO pays for today</p>
+    <div class="grid g4">
+      <div class="card"><h3>Tree planting</h3><p class="small">Photo + location. <b>100 ECOIN</b>, then <b>400</b> more if it is alive 30 days later at the same spot.</p></div>
+      <div class="card"><h3>Cleanup</h3><p class="small">Before and after photos. SAM 3.1 counts the litter removed: <b>50 + 10 per item</b>, up to 300.</p></div>
+      <div class="card"><h3>Recycling</h3><p class="small">Bottles and cans laid out. SAM 3.1 counts each one: <b>5 ECOIN per item</b>, up to 200.</p></div>
+      <div class="card"><h3>Next</h3><p class="small">New actions are protocols — data, not code. Merchants accept ECOIN; face pay with a WhatsApp code backup is on the roadmap.</p></div>
+    </div>
+  </div></section>
+
+  <section><div class="wrap grid g2">
+    <div><p class="label">Responsible by design</p><h2>Trust, without exposing people</h2></div>
+    <ul class="small" style="margin:0;padding-left:18px;display:grid;gap:8px">
+      <li>Consent first: nothing is checked until the person agrees that their photos and location form a public Evidence File.</li>
+      <li>Phone numbers are never published; people appear as pseudonyms like <span class="mono">eco_3f9a…</span>.</li>
+      <li>Meta Model API in Standard mode only — contributor models that train on data are refused in code.</li>
+      <li>Ambiguous evidence is “needs better evidence”, and the agent says what photo would settle it.</li>
+      <li>Every check and every ledger entry is append-only in the database.</li>
+      <li>ECOIN here is a test ledger, not a cryptocurrency for sale.</li>
+    </ul>
+  </div></section>
+</main>
+<footer><div class="wrap">Built solo for the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026) · <a href="https://github.com/paulmalik431-ctrl/eco-climate-os">Source code</a></div></footer>
+
+<script type="module">
+import { nav, rest, configured, WHATSAPP_NUMBER } from "./app.js";
+document.getElementById("nav").replaceWith(nav());
+if (WHATSAPP_NUMBER) { const a = document.getElementById("wa"); a.hidden = false; a.href = `https://wa.me/${WHATSAPP_NUMBER}?text=Hi%20ECO`; }
+if (configured) {
+  try {
+    const [s] = await rest("public_stats?select=*");
+    const vals = [s.verified_actions, s.trees_planted, s.items_recycled, s.ecoin_issued];
+    document.querySelectorAll("#stats b").forEach((b, i) => (b.textContent = Number(vals[i]).toLocaleString()));
+    document.getElementById("stats-note").textContent = `${s.people_paid} people paid · ${s.claims_not_paid} claims held back by the checks · ${s.trees_alive_30d} trees confirmed alive after 30 days.`;
+  } catch { document.getElementById("stats-note").textContent = "Live numbers are unavailable right now."; }
+}
+</script>
+</body>
+</html>
