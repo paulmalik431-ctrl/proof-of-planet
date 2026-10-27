@@ -11,6 +11,7 @@ export interface Observation {
   confidence: number; // 0..1
   notes: string;
   better_evidence: string; // what would resolve any doubt, in plain words
+  visible_counts?: Record<string, number>; // the model's own count, used only when SAM 3.1 is unavailable
 }
 
 export interface Context {
@@ -48,7 +49,7 @@ export function decide(p: Protocol, obs: Observation, counts: Record<string, num
 
   for (const r of p.photos) {
     const n = counts[r.role] ?? 0;
-    if (n < r.minCount) doubts.push(`SAM 3.1 found no ${r.sam.join(" or ")} in the ${r.label.toLowerCase()} photo.`);
+    if (n < r.minCount) doubts.push(`No ${r.sam.join(" or ")} was found in the ${r.label.toLowerCase()} photo.`);
   }
 
   for (const q of p.questions) {

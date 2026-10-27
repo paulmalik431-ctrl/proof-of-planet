@@ -5,16 +5,16 @@
 // Writes evals/results.json and evals/README.md. Costs roughly 3–4 Meta API calls per case.
 //   MODEL_API_KEY=... bun scripts/ghost-audit.ts [--no-generate]
 import { mkdir, readdir } from "node:fs/promises";
-import { MetaClient } from "../supabase/functions/_core/meta.ts";
+import { clientFromEnv } from "../supabase/functions/_core/meta.ts";
 import { MemoryStore } from "../supabase/functions/_core/store.ts";
 import { verifyClaim } from "../supabase/functions/_core/verify.ts";
 import { sha256Hex } from "../supabase/functions/_core/ledger.ts";
 import type { ProtocolId } from "../supabase/functions/_core/protocols.ts";
 
 const ROOT = `${import.meta.dir}/../evals`;
-const key = process.env.MODEL_API_KEY;
-if (!key) throw new Error("Set MODEL_API_KEY");
-const meta = new MetaClient(key);
+if (!process.env.MODEL_API_KEY && !process.env.BASETEN_API_KEY) throw new Error("Set MODEL_API_KEY and/or BASETEN_API_KEY");
+const meta = clientFromEnv((k) => process.env[k]);
+const canGenerate = !!process.env.MODEL_API_KEY; // Muse Image needs the Meta Model API
 let calls = 0;
 meta.onCall = () => calls++;
 
@@ -65,7 +65,7 @@ async function run(c: Case, store: MemoryStore) {
   return { outcome: r.check.decision.outcome, reward: r.check.decision.reward, reasons: r.check.decision.reasons, notes: r.check.observation.notes, counts: r.check.counts, ai_flag: r.check.observation.possibly_ai_generated_or_edited };
 }
 
-const cases = [...(process.argv.includes("--no-generate") ? [] : await generate()), ...(await realCases())];
+const cases = [...(process.argv.includes("--no-generate") || !canGenerate ? [] : await generate()), ...(await realCases())];
 const store = new MemoryStore();
 const results = [];
 for (const c of cases) {
@@ -90,7 +90,7 @@ const fakes = results.filter((r) => r.kind === "fake" && !("error" in r && r.err
 const reals = results.filter((r) => r.kind === "real" && !("error" in r && r.error));
 const summary = {
   run_at: new Date().toISOString(),
-  models: ["sam-3.1", "muse-spark-1.3", "muse-image-1.0"],
+  models: [meta.canSegment ? "sam-3.1" : "no SAM (count estimate)", meta.reasoningModel, ...(canGenerate ? ["muse-image-1.0"] : [])],
   fraud_blocked: `${fakes.filter((r) => !r.paid).length}/${fakes.length}`,
   honest_paid: reals.length ? `${reals.filter((r) => r.paid && r.expectPaid).length}/${reals.filter((r) => r.expectPaid).length}` : "n/a",
   api_calls: calls,

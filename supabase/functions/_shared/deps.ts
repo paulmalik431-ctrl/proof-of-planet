@@ -1,6 +1,6 @@
 // Wires the agent to Supabase, the Meta Model API, WhatsApp and the environment.
 import type { AgentDeps } from "../_core/agent.ts";
-import { MetaClient } from "../_core/meta.ts";
+import { clientFromEnv } from "../_core/meta.ts";
 import { sendText, type WaConfig } from "../_core/whatsapp.ts";
 import { SupabaseStore } from "./supabase-store.ts";
 
@@ -22,7 +22,7 @@ export const wa: WaConfig = {
 
 export function makeDeps(limits: AgentDeps["limits"]): AgentDeps & { store: SupabaseStore } {
   const store = new SupabaseStore();
-  const meta = new MetaClient(env("MODEL_API_KEY"));
+  const meta = clientFromEnv((k) => Deno.env.get(k));
   meta.onCall = (e) => console.log(JSON.stringify({ meta_call: e }));
   return {
     store,

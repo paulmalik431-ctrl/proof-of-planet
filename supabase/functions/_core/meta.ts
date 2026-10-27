@@ -10,7 +10,13 @@ export const MODELS = {
   sam: "sam-3.1",
   voice: "muse-voice-transcribe-1.0",
   image: "muse-image-1.0",
+  sparkOpen: "meta-models/muse-spark-open-1026", // Meta open-weight model, served by Baseten for the hackathon
 } as const;
+
+export const BASETEN_BASE = "https://inference.baseten.co/v1";
+
+/** Where chat (agent + vision reasoning) runs. Default: Muse Spark 1.3 on Meta Model API. */
+export interface ChatProvider { base: string; key: string; model: string; label: string }
 
 export class MetaError extends Error {
   constructor(message: string, public status = 502) {
@@ -42,25 +48,33 @@ export class MetaClient {
   /** Every call is reported here (model, latency, ok) so runs can be audited and costed. */
   onCall?: (e: { model: string; endpoint: string; ms: number; ok: boolean }) => void;
 
-  constructor(private readonly apiKey: string, opts: { fetch?: Fetch; base?: string } = {}) {
-    if (!apiKey) throw new MetaError("Meta Model API key missing (MODEL_API_KEY).", 503);
+  /** Chat provider in use; SAM 3.1, voice and image always use the Meta Model API. */
+  readonly chatProvider: ChatProvider;
+
+  constructor(private readonly apiKey: string | null, opts: { fetch?: Fetch; base?: string; chat?: ChatProvider } = {}) {
+    if (!apiKey && !opts.chat) throw new MetaError("No model key: set MODEL_API_KEY (Meta Model API) or BASETEN_API_KEY (Muse Spark Open).", 503);
     this.fetch = opts.fetch ?? fetch;
     this.base = opts.base ?? META_BASE;
+    this.chatProvider = opts.chat ?? { base: this.base, key: apiKey!, model: MODELS.spark, label: "Muse Spark 1.3 (Meta Model API)" };
   }
   private readonly base: string;
+
+  /** SAM 3.1 needs the Meta Model API; without it, Witness and Loop fall back to the reasoning model's count estimate. */
+  get canSegment(): boolean { return !!this.apiKey; }
 
   private guard(model: string) {
     if (model.includes("-contributor")) throw new MetaError(`Refusing contributor model ${model}`, 500);
   }
 
-  private async post(endpoint: string, model: string, body: BodyInit, headers: Record<string, string>): Promise<Response> {
+  private async post(endpoint: string, model: string, body: BodyInit, headers: Record<string, string>, via?: ChatProvider): Promise<Response> {
     this.guard(model);
+    if (!via && !this.apiKey) throw new MetaError(`${model} needs the Meta Model API key (MODEL_API_KEY).`, 503);
     const t0 = Date.now();
     let res: Response | null = null;
     try {
-      res = await this.fetch(`${this.base}${endpoint}`, {
+      res = await this.fetch(`${via?.base ?? this.base}${endpoint}`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${this.apiKey}`, ...headers },
+        headers: { Authorization: `Bearer ${via?.key ?? this.apiKey}`, ...headers },
         body,
       });
     } catch {
@@ -89,31 +103,43 @@ export class MetaClient {
     responseFormat?: Record<string, unknown>;
     maxTokens?: number;
   }): Promise<{ message: ChatMessage; finish: string }> {
-    const model = opts.model ?? MODELS.spark;
+    const via = this.chatProvider;
+    const model = via.base === this.base ? (opts.model ?? via.model) : via.model;
     const body: Record<string, unknown> = { model, messages: opts.messages };
     if (opts.tools?.length) body.tools = opts.tools;
     if (opts.responseFormat) body.response_format = opts.responseFormat;
-    if (opts.maxTokens) body.max_tokens = opts.maxTokens;
-    const res = await this.post("/chat/completions", model, JSON.stringify(body), { "Content-Type": "application/json" });
+    // Reasoning models spend tokens thinking first; leave room for the answer.
+    if (opts.maxTokens) body.max_tokens = via.model === MODELS.sparkOpen ? Math.max(opts.maxTokens, 4000) : opts.maxTokens;
+    const res = await this.post("/chat/completions", model, JSON.stringify(body), { "Content-Type": "application/json" }, via);
     const j = await res.json();
     const choice = j?.choices?.[0];
     if (!choice?.message) throw new MetaError(`${model} returned no message.`);
-    return { message: choice.message as ChatMessage, finish: choice.finish_reason ?? "stop" };
+    const message = choice.message as ChatMessage;
+    if (typeof message.content === "string") message.content = stripReasoning(message.content);
+    return { message, finish: choice.finish_reason ?? "stop" };
   }
+
+  /** The model that actually answered chat calls, for audit records. */
+  get reasoningModel(): string { return this.chatProvider.model; }
 
   /** Chat with schema-constrained JSON output. */
   async chatJSON<T>(opts: { system: string; user: ChatContent; name: string; schema: Record<string, unknown>; model?: string }): Promise<T> {
-    const { message } = await this.chat({
-      model: opts.model,
-      messages: [{ role: "system", content: opts.system }, { role: "user", content: opts.user }],
-      responseFormat: { type: "json_schema", json_schema: { name: opts.name, schema: opts.schema, strict: false } },
-    });
+    const messages: ChatMessage[] = [{ role: "system", content: opts.system }, { role: "user", content: opts.user }];
+    let message: ChatMessage;
+    try {
+      ({ message } = await this.chat({ model: opts.model, messages, responseFormat: { type: "json_schema", json_schema: { name: opts.name, schema: opts.schema, strict: false } } }));
+    } catch (e) {
+      // Providers without structured output: ask for the same JSON in plain text.
+      if (!(e instanceof MetaError) || e.status !== 400) throw e;
+      ({ message } = await this.chat({ model: opts.model, messages: [{ role: "system", content: `${opts.system}\n\nReply with ONLY a JSON object matching this JSON Schema, no prose:\n${JSON.stringify(opts.schema)}` }, messages[1]] }));
+    }
     const text = typeof message.content === "string" ? message.content : "";
-    const cleaned = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
+    const start = text.indexOf("{"), end = text.lastIndexOf("}");
+    const cleaned = start >= 0 && end > start ? text.slice(start, end + 1) : text;
     try {
       return JSON.parse(cleaned) as T;
     } catch {
-      throw new MetaError(`${opts.model ?? MODELS.spark} returned unreadable JSON.`);
+      throw new MetaError(`${this.chatProvider.model} returned unreadable JSON.`);
     }
   }
 
@@ -164,6 +190,11 @@ export class MetaClient {
   }
 }
 
+/** Removes visible chain-of-thought some reasoning models put in the content. */
+export function stripReasoning(s: string): string {
+  return s.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+}
+
 /** The transcription response schema isn't fully documented; accept the common shapes. */
 export function extractTranscript(j: unknown): string {
   const o = j as Record<string, unknown>;
@@ -185,4 +216,19 @@ export function bytesToDataUrl(bytes: Uint8Array, mime: string): string {
   let bin = "";
   for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
   return `data:${mime};base64,${btoa(bin)}`;
+}
+
+/**
+ * Builds the client from settings. Meta Model API (MODEL_API_KEY) gives SAM 3.1, voice and image;
+ * chat runs on Muse Spark 1.3 there, or on Meta's open-weight Muse Spark Open via Baseten
+ * (BASETEN_API_KEY) when CHAT_PROVIDER=baseten or when no Meta key is set.
+ */
+export function clientFromEnv(get: (k: string) => string | undefined, fetchImpl?: typeof fetch): MetaClient {
+  const metaKey = get("MODEL_API_KEY") || null;
+  const bt = get("BASETEN_API_KEY");
+  const useBaseten = !!bt && (get("CHAT_PROVIDER") === "baseten" || !metaKey);
+  return new MetaClient(metaKey, {
+    fetch: fetchImpl,
+    chat: useBaseten ? { base: BASETEN_BASE, key: bt!, model: MODELS.sparkOpen, label: "Muse Spark Open (open weights, Baseten)" } : undefined,
+  });
 }

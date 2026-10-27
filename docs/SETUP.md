@@ -17,7 +17,9 @@ The website is hosted on GitHub Pages from this repo, and the backend deploys fr
 
 | Secret | Value |
 |---|---|
-| `MODEL_API_KEY` | Meta Model API key (Standard mode) |
+| `MODEL_API_KEY` | Meta Model API key (Standard mode): SAM 3.1, Muse Spark 1.3, Muse Image |
+| `BASETEN_API_KEY` | Baseten hackathon key for **Muse Spark Open** (Meta's open-weight model). Works on its own if the Meta key isn't ready yet. |
+| `CHAT_PROVIDER` | optional: `baseten` to run the agent and reasoning on Muse Spark Open even when the Meta key is set |
 | `PUBLIC_URL` | `https://<github-user>.github.io/proof-of-planet` |
 | `WHATSAPP_TOKEN` | WhatsApp access token (a temporary token works for the demo) |
 | `WHATSAPP_PHONE_NUMBER_ID` | From WhatsApp → API Setup |

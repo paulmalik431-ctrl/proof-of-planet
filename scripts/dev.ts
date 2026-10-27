@@ -3,7 +3,7 @@
 //   MODEL_API_KEY=... bun scripts/dev.ts            → http://localhost:8787
 //   bun scripts/dev.ts --seed a.jpg b.jpg c.jpg     → also plays a scripted earn → trade → spend story (fake model answers)
 import { handle, type Inbound } from "../supabase/functions/_core/agent.ts";
-import { base64ToBytes, MetaClient } from "../supabase/functions/_core/meta.ts";
+import { base64ToBytes, clientFromEnv } from "../supabase/functions/_core/meta.ts";
 import { MemoryStore } from "../supabase/functions/_core/store.ts";
 import { sha256Hex, SYSTEM } from "../supabase/functions/_core/ledger.ts";
 import { fakeMeta, type Turn } from "../tests/fake-meta.ts";
@@ -11,7 +11,7 @@ import { fakeMeta, type Turn } from "../tests/fake-meta.ts";
 const PORT = Number(process.env.PORT ?? 8787);
 const ORIGIN = `http://localhost:${PORT}`;
 const store = new MemoryStore();
-const meta = process.env.MODEL_API_KEY ? new MetaClient(process.env.MODEL_API_KEY) : null;
+const meta = process.env.MODEL_API_KEY || process.env.BASETEN_API_KEY ? clientFromEnv((k) => process.env[k]) : null;
 if (meta) meta.onCall = (e) => console.log("meta", e);
 const isSandbox = (p: string) => p.startsWith("999");
 const deps = (m = meta!) => ({ store, meta: m, publicUrl: ORIGIN, limits: { messagesPerDay: 500, verificationsPerDay: 100 }, isSandbox });
@@ -149,7 +149,7 @@ Bun.serve({
       const phone = "999" + (BigInt("0x" + (await sha256Hex(`${b.session}:${persona}`)).slice(0, 12)) % 1_000_000_000n).toString().padStart(9, "0");
       const acct = () => store.accountByPhone(phone);
       if (b.poll) { const a = await acct(); return json({ replies: [], inbox: a ? await store.drain(a.id) : [], phone }); }
-      if (!meta) return json({ replies: ["Set MODEL_API_KEY to talk to the live agent locally."], inbox: [], phone });
+      if (!meta) return json({ replies: ["Set MODEL_API_KEY or BASETEN_API_KEY to talk to the live agent locally."], inbox: [], phone });
       const base = { id: `sim_${crypto.randomUUID()}`, from: phone, at: new Date() };
       const msg: Inbound = b.image ? { ...base, kind: "image", image: { bytes: base64ToBytes(b.image), mime: b.mime ?? "image/jpeg", caption: b.text } }
         : typeof b.lat === "number" ? { ...base, kind: "location", location: { lat: b.lat, lng: b.lng } }

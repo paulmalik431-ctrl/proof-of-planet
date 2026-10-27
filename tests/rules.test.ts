@@ -16,7 +16,7 @@ describe("tree planting", () => {
     const d = decide(p, tree, { planting: 0 }, ctx);
     expect(d.outcome).toBe("unresolved");
     expect(d.reward).toBe(0);
-    expect(d.reasons[0]).toContain("SAM 3.1");
+    expect(d.reasons[0]).toContain("No sapling");
   });
   test("confident potted plant → contradicted", () => {
     expect(decide(p, obs({ ...tree.answers, potted_or_indoor: "yes" }), { planting: 1 }, ctx).outcome).toBe("contradicted");

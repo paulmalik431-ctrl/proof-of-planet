@@ -69,6 +69,7 @@ The tests show that a model calling tools out of order gets nothing (`tests/agen
 | **Muse Spark 1.3** with tool calling | The agent: 23 tools across four roles, in any language | `_core/agent.ts`, `_core/tools.ts` |
 | **Muse Spark 1.3** with vision and JSON schema | Witness observations, Loop grading, dispute recommendations, Atlas briefs | `_core/verify.ts`, `_core/loop.ts`, `functions/atlas` |
 | **SAM 3.1** | Counts saplings, litter, bottles and cans. The counts drive rewards and prices, and the boxes are drawn on Evidence Files | `_core/sam.ts`, `_core/verify.ts`, `_core/loop.ts` |
+| **Muse Spark Open** (open weights, via Baseten) | Drop-in engine for the agent and all reasoning (`CHAT_PROVIDER=baseten`). If SAM 3.1 isn't available, counts come from the model's own estimate, and the record says so | `_core/meta.ts` (`clientFromEnv`) |
 | **Muse Image** | Ghost Audit: generates fraudulent evidence to attack our own checks | `scripts/ghost-audit.ts` |
 | **Muse Voice Transcribe** | Voice-note claims (WAV path ready; WhatsApp's Opus notes are on the roadmap) | `_core/meta.ts` |
 

@@ -19,9 +19,10 @@ export function observationSchema(p: Protocol) {
   return {
     type: "object",
     additionalProperties: false,
-    required: ["answers", "possibly_ai_generated_or_edited", "confidence", "notes", "better_evidence"],
+    required: ["answers", "visible_counts", "possibly_ai_generated_or_edited", "confidence", "notes", "better_evidence"],
     properties: {
       answers: { type: "object", additionalProperties: false, required: p.questions.map((q) => q.key), properties: answers },
+      visible_counts: { type: "object", additionalProperties: false, required: p.photos.map((r) => r.role), properties: Object.fromEntries(p.photos.map((r) => [r.role, { type: "number" }])) },
       possibly_ai_generated_or_edited: { type: "boolean" },
       confidence: { type: "number" },
       notes: { type: "string" },
@@ -35,6 +36,7 @@ export function observerPrompt(p: Protocol): string {
 Answer ONLY from what is visible in the photos. Use "unclear" whenever you are not sure — never guess.
 Questions (answer each yes / no / unclear):
 ${p.questions.map((q) => `- ${q.key}: ${q.ask}`).join("\n")}
+visible_counts: for each photo (${p.photos.map((r) => `${r.role}: ${r.sam.join(" + ")}`).join("; ")}), how many you can count.
 possibly_ai_generated_or_edited: true only for clear signs (impossible lighting or shadows, warped or melted objects, pasted elements, text artefacts, overly perfect render look).
 confidence: your overall confidence 0..1 in these answers.
 notes: at most 50 words, plain language, describing what you see. No accusations.
@@ -71,7 +73,7 @@ export async function verifyClaim(meta: MetaClient, store: Store, claimId: strin
 
   try {
     // SAM 3.1: one call per (photo, noun phrase), in parallel.
-    const jobs = p.photos.flatMap((r) => r.sam.map((phrase) => ({ role: r.role, phrase })));
+    const jobs = meta.canSegment ? p.photos.flatMap((r) => r.sam.map((phrase) => ({ role: r.role, phrase }))) : [];
     const samRuns = await Promise.all(jobs.map(async (j) => {
       calls++;
       const frames = parseSamOutput(await meta.segment(urls.get(j.role)!, j.phrase));
@@ -99,6 +101,8 @@ export async function verifyClaim(meta: MetaClient, store: Store, claimId: strin
     calls++;
     const raw = await meta.chatJSON<Observation>({ system: observerPrompt(p), user: content, name: `${p.id}_observation`, schema: observationSchema(p) });
     const observation = normalise(raw, p);
+    // Without SAM 3.1 (no Meta Model API key), counts come from the reasoning model's own estimate.
+    if (!meta.canSegment) for (const r of p.photos) counts[r.role] = Math.max(0, Math.round(Number(raw?.visible_counts?.[r.role]) || 0));
 
     let duplicate = false;
     for (const e of photos.values()) if (e.sha256 && await store.photoHashUsedElsewhere(e.sha256, claim.id)) duplicate = true;
@@ -114,7 +118,7 @@ export async function verifyClaim(meta: MetaClient, store: Store, claimId: strin
 
     const check = await store.addCheck({
       claim_id: claim.id, decision, observation, counts, boxes,
-      models: { segmentation: MODELS.sam, reasoning: MODELS.spark, calls, ms: Date.now() - t0 },
+      models: { segmentation: meta.canSegment ? MODELS.sam : `count estimated by ${meta.reasoningModel}`, reasoning: meta.reasoningModel, calls, ms: Date.now() - t0 },
     });
     let credit: LedgerEntry | null = null;
     if (decision.outcome === "consistent" && decision.reward > 0) {

@@ -127,7 +127,7 @@ export function priceLot(m: Material, claimed: number, samCount: number, o: LotO
   const seen = Math.max(samCount, Math.round(o.estimated_quantity || 0));
   let qty: number;
   if (m.unit === "items") {
-    if (seen === 0) reasons.push(`SAM 3.1 couldn't find any ${m.sam}s.`);
+    if (seen === 0) reasons.push(`No ${m.sam}s could be found in the photo.`);
     qty = Math.min(claimed, Math.max(seen, 0));
     if (seen < claimed * 0.5) reasons.push(`The photo shows about ${seen}, not ${claimed}. Spread the lot out, or send it in parts.`);
   } else {
@@ -142,7 +142,7 @@ export function priceLot(m: Material, claimed: number, samCount: number, o: LotO
 
 export async function assessLot(meta: MetaClient, m: Material, claimed: number, photoDataUrl: string): Promise<Assessment> {
   const [sam, obs] = await Promise.all([
-    meta.segment(photoDataUrl, m.sam).then((t) => countObjects(parseSamOutput(t))),
+    meta.canSegment ? meta.segment(photoDataUrl, m.sam).then((t) => countObjects(parseSamOutput(t))) : Promise.resolve(0),
     meta.chatJSON<LotObservation>({
       system: `You grade a lot of recyclable waste offered for sale: ${m.title}, the seller says ${claimed} ${m.unit}.
 Answer only from the photo; use "unclear" when unsure.

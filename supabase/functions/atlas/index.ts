@@ -1,8 +1,8 @@
 // Atlas — turns verified climate activity into a brief for funders and investors:
 // what to fund, where action is needed, where the risk is. Muse Spark writes it from the
 // public numbers only (every claim it makes is checkable on the map), refreshed at most every 6 hours.
-import { MetaClient } from "../_core/meta.ts";
-import { cors, env, json } from "../_shared/deps.ts";
+import { clientFromEnv } from "../_core/meta.ts";
+import { cors, json } from "../_shared/deps.ts";
 import { SupabaseStore } from "../_shared/supabase-store.ts";
 
 const FRESH_MS = 6 * 3600_000;
@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
   if (!cells?.length) return json({ brief: null, cells: [], stats });
 
   try {
-    const meta = new MetaClient(env("MODEL_API_KEY"));
+    const meta = clientFromEnv((k) => Deno.env.get(k));
     const brief = await meta.chatJSON({
       system: `You are Atlas, ECO's climate-intelligence analyst. Write a brief for climate funders and impact investors from ECO's verified data.
 Use ONLY the numbers given. Each cell is ~5 km: verified actions, trees, trees confirmed alive after 30 days, cleanups, recycling, claims held back by checks, integrity (share of checked claims that passed), ECOIN paid, recyclable units traded.
