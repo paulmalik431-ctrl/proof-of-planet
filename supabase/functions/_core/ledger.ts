@@ -1,26 +1,46 @@
-// ECOIN ledger: append-only and hash-chained. Each entry commits to the one before it,
-// so changing or deleting any past entry breaks every hash after it. Anyone can re-check
-// the whole chain in a browser (web/ledger.html) without trusting ECO's server.
-// The database computes the same hash in SQL (supabase/migrations, ledger_append).
+// ECOIN ledger: append-only, double-entry, hash-chained.
+//   • ECOIN is minted only by a verified climate action ("reward") — no proof, no token.
+//   • Every other movement (trade, escrow, payment, fee, reserve) is a set of legs that sums to zero.
+//   • Each entry commits to the one before it, so altering or deleting any past entry breaks every
+//     hash after it. Anyone can re-check the chain in a browser (web/ledger.html).
+// The database applies the same rules and the same hash in SQL (ledger_post in the migration).
 
 export const GENESIS = "0".repeat(64);
+
+export type EntryKind =
+  | "reward"   // minted for a verified climate action
+  | "deposit"  // test funding for business accounts in this demo (clearly labelled)
+  | "trade"    // Loop: escrow → seller
+  | "escrow"   // Loop: buyer → escrow, or escrow → buyer on refund
+  | "payment"  // Glance: customer → shop
+  | "fee"      // ECO's revenue share of a fee
+  | "reserve"; // the Reserve's share of a fee
+
+export const MINT_KINDS: EntryKind[] = ["reward", "deposit"];
+
+export const SYSTEM = {
+  escrow: "eco_escrow",
+  treasury: "eco_treasury",
+  reserve: "eco_reserve",
+} as const;
 
 export interface LedgerEntry {
   seq: number;
   prev_hash: string;
   hash: string;
   account_id: string;
-  amount: number;        // whole ECOIN; positive = credit
-  kind: "reward" | "spend" | "adjustment";
-  claim_id: string | null;
+  amount: number;   // whole ECOIN; + credit, − debit
+  kind: EntryKind;
+  ref: string | null; // claim, trade or payment id
   memo: string;
-  at: string;            // ISO-8601 UTC with milliseconds, e.g. 2026-10-26T18:00:00.000Z
+  at: string;       // ISO-8601 UTC with milliseconds
 }
 
 export type UnsignedEntry = Omit<LedgerEntry, "hash">;
+export interface Leg { account_id: string; amount: number; kind: EntryKind }
 
 export function canonical(e: UnsignedEntry): string {
-  return [e.seq, e.prev_hash, e.account_id, e.amount, e.kind, e.claim_id ?? "", e.memo, e.at].join("|");
+  return [e.seq, e.prev_hash, e.account_id, e.amount, e.kind, e.ref ?? "", e.memo, e.at].join("|");
 }
 
 export async function sha256Hex(data: string | Uint8Array): Promise<string> {
@@ -31,6 +51,23 @@ export async function sha256Hex(data: string | Uint8Array): Promise<string> {
 
 export async function seal(e: UnsignedEntry): Promise<LedgerEntry> {
   return { ...e, hash: await sha256Hex(canonical(e)) };
+}
+
+/** The posting rules shared by every store. Returns an error message, or null if the legs are valid. */
+export function checkLegs(legs: Leg[], balanceOf: (account: string) => number): string | null {
+  if (!legs.length) return "no legs";
+  for (const l of legs) if (!Number.isInteger(l.amount) || l.amount === 0) return "amounts must be non-zero whole ECOIN";
+  const mint = legs.every((l) => MINT_KINDS.includes(l.kind));
+  if (mint) {
+    if (legs.some((l) => l.amount < 0)) return "minting cannot debit";
+  } else {
+    if (legs.some((l) => MINT_KINDS.includes(l.kind))) return "mint kinds cannot be mixed with transfers";
+    if (legs.reduce((s, l) => s + l.amount, 0) !== 0) return "transfer legs must sum to zero";
+  }
+  const net = new Map<string, number>();
+  for (const l of legs) net.set(l.account_id, (net.get(l.account_id) ?? 0) + l.amount);
+  for (const [a, n] of net) if (n < 0 && balanceOf(a) + n < 0) return `insufficient ECOIN in ${a}`;
+  return null;
 }
 
 /** Checks the chain in order. Returns the first broken seq, or null if intact. */
@@ -47,6 +84,10 @@ export async function verifyChain(entries: LedgerEntry[]): Promise<{ ok: boolean
   return { ok: true, brokenAt: null };
 }
 
-export function utcIso(d: Date): string {
-  return d.toISOString(); // always ...sss Z
+/** Supply audit: every ECOIN in existence traces back to a reward or a labelled deposit. */
+export function supply(entries: LedgerEntry[]) {
+  const minted = entries.filter((e) => e.kind === "reward").reduce((s, e) => s + e.amount, 0);
+  const deposits = entries.filter((e) => e.kind === "deposit").reduce((s, e) => s + e.amount, 0);
+  const total = entries.reduce((s, e) => s + e.amount, 0);
+  return { minted, deposits, total, balanced: total === minted + deposits };
 }

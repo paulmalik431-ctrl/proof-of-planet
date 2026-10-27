@@ -2,84 +2,119 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ECO — Climate Action OS</title>
-<meta name="description" content="ECO pays people for verified climate action over WhatsApp. Meta AI checks the evidence; a public ledger records every ECOIN.">
+<title>ECO · Proof of Planet</title>
+<meta name="description" content="ECO makes climate action attractive and tradeable. Earn ECOIN for verified climate action, trade recyclables through escrow, spend in shops — on WhatsApp, checked by Meta AI.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="nav"></div>
 <main>
   <section class="hero"><div class="wrap">
-    <p class="label">Evidence file · Climate Action OS</p>
-    <h1>Climate action<br>you can check.</h1>
-    <p class="lede">ECO pays people for verified climate action — trees planted, places cleaned, bottles recycled — through a WhatsApp chat in any language. Meta AI checks every photo. A public ledger shows every coin.</p>
+    <p class="label">Exhibit 01 · ECO · Proof of Planet</p>
+    <h1>ECO makes climate action attractive, and tradeable.</h1>
+    <p class="lede">Bitcoin is mined with electricity. <b>ECOIN is minted by Proof of Planet</b>: you earn it for verified climate action, trade it for recyclables, and spend it in shops. It all happens on WhatsApp, in any language, and Meta AI checks the evidence.</p>
     <p style="display:flex;gap:10px;flex-wrap:wrap">
-      <a class="btn" href="try.html">Try it in your browser</a>
+      <a class="btn" href="try.html">Watch it work: live demo</a>
       <a class="btn wa" id="wa" href="#" hidden>Message ECO on WhatsApp</a>
-      <a class="btn ghost" href="ledger.html">See the ledger</a>
+      <a class="btn ghost" href="atlas.html">Open Atlas</a>
     </p>
+  </div></section>
+
+  <section><div class="wrap">
+    <p class="label">Exhibit 02 · The problem</p>
+    <h2>Climate action and payments are broken for most people.</h2>
+    <div class="grid g4" style="margin-top:16px">
+      <div class="card problem"><b>Unverified</b><span class="small">Funders can't trust the evidence, so they check it by hand or don't pay at all.</span></div>
+      <div class="card problem"><b>Unpaid, unbanked</b><span class="small">The people doing the work rarely earn from it, and 1.4 billion adults have no bank account.</span></div>
+      <div class="card problem"><b>Costly, hard to use</b><span class="small">Cards and payment platforms charge high fees and are hard for first-time users.</span></div>
+      <div class="card problem"><b>Untradeable</b><span class="small">Climate waste and verified action have no simple market.</span></div>
+    </div>
+    <p style="margin-top:14px"><b>ECO fixes all four.</b> <span class="small muted">Source: World Bank Global Findex 2021.</span></p>
+  </div></section>
+
+  <section><div class="wrap">
+    <p class="label">Exhibit 03 · The Climate Action OS</p>
+    <h2>Earn it. Trade it. Spend it. Fund it.</h2>
+    <div class="grid g4" style="margin-top:18px">
+      <div class="card engine"><span class="verb">Earn</span><h3>Witness</h3>
+        <p class="small">Plant a tree, clean up a place or recycle, then send photos on WhatsApp. SAM 3.1 counts what matters, Muse Spark answers fixed questions, and fixed rules decide. <b>No proof, no token.</b></p>
+        <p><span class="model">SAM 3.1</span> <span class="model">Muse Spark</span></p></div>
+      <div class="card engine"><span class="verb">Trade</span><h3>Loop</h3>
+        <p class="small">Sell sorted bottles, cans, cardboard and e-waste to businesses. AI counts, grades and prices each lot. The buyer's ECOIN is held in <b>escrow</b> until delivery. If there's a dispute, AI recommends and a person decides.</p>
+        <p><span class="model">SAM 3.1</span> <span class="model">Muse Spark</span></p></div>
+      <div class="card engine"><span class="verb">Spend</span><h3>Glance</h3>
+        <p class="small">Pay in shops, on buses and in apps with no card and no cash. The shop types your number, and you confirm with your face (on the roadmap) or the <b>WhatsApp code</b>. There is no face database.</p>
+        <p><span class="model">WhatsApp</span></p></div>
+      <div class="card engine"><span class="verb">Fund</span><h3>Atlas</h3>
+        <p class="small">Verified data becomes a live map for funders and investors: what to fund, where action is needed, and where the risk is. Every claim links back to its evidence.</p>
+        <p><span class="model">Muse Spark</span></p></div>
+    </div>
+    <p class="small muted" style="margin-top:12px">All four run on one agent: <b>ECO on WhatsApp</b> (Muse Spark 1.3 with tool calling), plus <b>Vault</b>, the escrow and an audited Reserve on a public, hash-chained ledger.</p>
   </div></section>
 
   <section><div class="wrap">
     <p class="label">Live, from the public ledger</p>
     <div class="grid g4" id="stats">
-      <div class="card stat"><b>—</b><span>verified actions</span></div>
-      <div class="card stat"><b>—</b><span>trees planted</span></div>
-      <div class="card stat"><b>—</b><span>items recycled</span></div>
-      <div class="card stat"><b>—</b><span>ECOIN paid</span></div>
+      <div class="card stat"><b>—</b><span>verified climate actions</span></div>
+      <div class="card stat"><b>—</b><span>recyclables traded (units)</span></div>
+      <div class="card stat"><b>—</b><span>ECOIN minted by Proof of Planet</span></div>
+      <div class="card stat"><b>—</b><span>ECOIN in the Reserve</span></div>
     </div>
     <p class="small muted" id="stats-note" style="margin-top:10px"></p>
   </div></section>
 
   <section><div class="wrap grid g2">
     <div>
-      <p class="label">How it works</p>
-      <h2>From a photo to a payment, on Meta</h2>
+      <p class="label">Exhibit 04 · The design rule</p>
+      <p class="big-quote">The AI can look and talk.<br>Only rules can move money.</p>
+      <p style="margin-top:14px">The agent chooses which tool to use. Each tool enforces its own rules, and ECOIN can only move through four gates:</p>
     </div>
-    <ol class="steps">
-      <li><div><b>Report on WhatsApp.</b> “I planted a tree.” Text or photo, any language. <span class="model">WhatsApp Cloud API</span></div></li>
-      <li><div><b>The agent collects the evidence.</b> It asks for exactly what is missing — a photo, a before/after pair, your location. <span class="model">Muse Spark 1.3 · tool calling</span></div></li>
-      <li><div><b>Meta AI looks.</b> SAM 3.1 finds and counts saplings, litter, bottles and cans. Muse Spark answers fixed questions: same place? alive? edited? <span class="model">SAM 3.1</span> <span class="model">Muse Spark 1.3</span></div></li>
-      <li><div><b>Rules decide, not the model.</b> Verified, needs better evidence, or contradicted — with plain reasons. Unclear never becomes an accusation.</div></li>
-      <li><div><b>ECOIN is paid on a public ledger.</b> Each entry is hash-chained to the last. Anyone can re-check the whole chain in their browser.</div></li>
-    </ol>
+    <div>
+      <div class="gate"><span><b>Mint</b>: only after Witness checks find the evidence consistent. The amount comes from the protocol, never from the model.</span></div>
+      <div class="gate"><span><b>Escrow</b>: only when the buyer accepts the offer, and only from their own balance.</span></div>
+      <div class="gate"><span><b>Release</b>: only when the buyer confirms delivery, or a human reviewer decides a dispute.</span></div>
+      <div class="gate"><span><b>Pay</b>: only with the 6-digit code sent to the customer's WhatsApp (stored as a hash, valid for 5 minutes, 3 tries).</span></div>
+      <p class="small muted" style="margin-top:10px">Every entry is hash-chained and append-only, and the database rejects overdrafts. <a href="ledger.html">Check the whole chain yourself →</a></p>
+    </div>
   </div></section>
 
   <section><div class="wrap grid g2">
     <div>
-      <p class="label">The design rule</p>
-      <h2>The AI can look and talk.<br>Only rules can pay.</h2>
+      <p class="label">Exhibit 05 · ECOIN</p>
+      <h2>Earned only for verified climate action.</h2>
+      <ul class="small" style="padding-left:18px;display:grid;gap:8px">
+        <li><b>No proof, no token.</b> New ECOIN is minted only by a verified action.</li>
+        <li><b>Spent</b> on trades and everyday payments.</li>
+        <li><b>Escrow:</b> each trade's ECOIN is held as collateral until delivery is confirmed.</li>
+        <li><b>Reserve:</b> 30% of every fee builds an audited ECOIN Reserve, visible on the ledger.</li>
+        <li><b>Intelligence:</b> the evidence behind every ECOIN gives funders a live view of climate activity in Atlas.</li>
+      </ul>
     </div>
     <div>
-      <p>The agent has no tool that moves money. Its only route to a payment is <span class="mono">verify_claim</span>, which runs SAM 3.1 and Muse Spark, applies fixed rules, and credits the protocol's reward — never an amount the model chooses.</p>
-      <p>Reused photos, places that don't match, trees that died, or images that look AI-made are caught by the same checks. We attack our own system with Muse Image fakes and publish the results.</p>
-      <p><a href="https://github.com/paulmalik431-ctrl/eco-climate-os/blob/main/evals/README.md">Read the evaluation →</a></p>
-    </div>
-  </div></section>
-
-  <section><div class="wrap">
-    <p class="label">What ECO pays for today</p>
-    <div class="grid g4">
-      <div class="card"><h3>Tree planting</h3><p class="small">Photo + location. <b>100 ECOIN</b>, then <b>400</b> more if it is alive 30 days later at the same spot.</p></div>
-      <div class="card"><h3>Cleanup</h3><p class="small">Before and after photos. SAM 3.1 counts the litter removed: <b>50 + 10 per item</b>, up to 300.</p></div>
-      <div class="card"><h3>Recycling</h3><p class="small">Bottles and cans laid out. SAM 3.1 counts each one: <b>5 ECOIN per item</b>, up to 200.</p></div>
-      <div class="card"><h3>Next</h3><p class="small">New actions are protocols — data, not code. Merchants accept ECOIN; face pay with a WhatsApp code backup is on the roadmap.</p></div>
+      <p class="label">Exhibit 06 · How ECO makes money</p>
+      <div class="fee"><b>Marketplace fees</b><span>2%</span><p>People sell climate waste to businesses on Loop. ECO takes a fee on every trade.</p></div>
+      <div class="fee"><b>Escrow fees</b><span>1%</span><p>Each trade's ECOIN is held until delivery. AI helps settle disputes; a person decides.</p></div>
+      <div class="fee"><b>Payment fees</b><span>1%</span><p>A fee on everyday Glance payments, paid by the shop.</p></div>
+      <div class="fee"><b>Verification fees</b><span>per project</span><p>Funds and developers pay for Witness checks and Atlas briefs on their projects.</p></div>
+      <div class="fee"><b>App revenue</b><span>today</span><p>Advertising and Boost subscriptions in the ECO App.</p></div>
+      <p style="margin-top:12px"><b>We earn from fees, not from ECOIN's price.</b></p>
     </div>
   </div></section>
 
   <section><div class="wrap grid g2">
-    <div><p class="label">Responsible by design</p><h2>Trust, without exposing people</h2></div>
+    <div><p class="label">Exhibit 07 · Responsible by design</p><h2>Trust without exposing people</h2></div>
     <ul class="small" style="margin:0;padding-left:18px;display:grid;gap:8px">
-      <li>Consent first: nothing is checked until the person agrees that their photos and location form a public Evidence File.</li>
-      <li>Phone numbers are never published; people appear as pseudonyms like <span class="mono">eco_3f9a…</span>.</li>
-      <li>Meta Model API in Standard mode only — contributor models that train on data are refused in code.</li>
-      <li>Ambiguous evidence is “needs better evidence”, and the agent says what photo would settle it.</li>
-      <li>Every check and every ledger entry is append-only in the database.</li>
-      <li>ECOIN here is a test ledger, not a cryptocurrency for sale.</li>
+      <li><b>Consent first.</b> Nothing is checked until the person agrees that their photos and location become a public Evidence File.</li>
+      <li><b>Pseudonyms only.</b> Phone numbers are never published; people appear as <span class="mono">eco_3f9a…</span>, and pickup points are rounded to about 1 km.</li>
+      <li><b>No accusations.</b> If the evidence is unclear, the result is "needs better evidence", and the agent says which photo would settle it.</li>
+      <li><b>A person decides every dispute.</b> The AI's recommendation and the human's decision are both shown on the trade page.</li>
+      <li><b>No face database and nothing biometric on the ledger.</b> Face pay waits for a certified provider; the WhatsApp code works today.</li>
+      <li>Meta Model API runs in Standard mode only; contributor models are refused in code. ECOIN in this build is a test ledger.</li>
+      <li>We attack our own checks with Muse Image fakes and publish the results (<a href="https://github.com/paulmalik431-ctrl/proof-of-planet/blob/main/evals/README.md">Ghost Audit</a>).</li>
     </ul>
   </div></section>
 </main>
-<footer><div class="wrap">Built solo for the Meta Global AI Developer Hackathon (Oct 26 – Nov 4, 2026) · <a href="https://github.com/paulmalik431-ctrl/eco-climate-os">Source code</a></div></footer>
+<footer><div class="wrap">ECO · Proof of Planet: built for the Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026 · <a href="https://github.com/paulmalik431-ctrl/proof-of-planet">Source code</a></div></footer>
 
 <script type="module">
 import { nav, rest, configured, WHATSAPP_NUMBER } from "./app.js";
@@ -88,9 +123,9 @@ if (WHATSAPP_NUMBER) { const a = document.getElementById("wa"); a.hidden = false
 if (configured) {
   try {
     const [s] = await rest("public_stats?select=*");
-    const vals = [s.verified_actions, s.trees_planted, s.items_recycled, s.ecoin_issued];
+    const vals = [s.verified_actions, s.units_traded, s.ecoin_minted, s.reserve];
     document.querySelectorAll("#stats b").forEach((b, i) => (b.textContent = Number(vals[i]).toLocaleString()));
-    document.getElementById("stats-note").textContent = `${s.people_paid} people paid · ${s.claims_not_paid} claims held back by the checks · ${s.trees_alive_30d} trees confirmed alive after 30 days.`;
+    document.getElementById("stats-note").textContent = `${s.trees_planted} trees planted · ${s.trees_alive_30d} confirmed alive after 30 days · ${s.trades_completed} trades completed · ${s.payments} shop payments · ${s.claims_not_paid} claims held back by the checks · ${s.fee_revenue} ECOIN fee revenue · ${s.in_escrow} in escrow.`;
   } catch { document.getElementById("stats-note").textContent = "Live numbers are unavailable right now."; }
 }
 </script>

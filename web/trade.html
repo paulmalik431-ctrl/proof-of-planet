@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loop Trade — ECO · Proof of Planet</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="nav"></div>
+<main class="wrap" style="padding-top:32px;padding-bottom:48px" id="main"><p class="muted">Loading trade…</p></main>
+<script type="module">
+import { nav, rest, configured, el, photoUrl, fmtDate, notConfigured, MATERIAL_TITLES, TRADE_WORDS, SYSTEM_NAMES } from "./app.js";
+document.getElementById("nav").replaceWith(nav());
+const main = document.getElementById("main");
+const id = new URLSearchParams(location.search).get("id") ?? "";
+
+async function load() {
+  if (!configured) { main.innerHTML = ""; return notConfigured(main); }
+  if (!/^[0-9a-f-]{36}$/i.test(id)) { main.innerHTML = "<p>No trade id in the link.</p>"; return; }
+  const [[t], entries] = await Promise.all([rest(`public_trades?id=eq.${id}&select=*`), rest(`public_ledger?ref=eq.${id}&select=*&order=seq.asc`)]);
+  if (!t) { main.innerHTML = "<p>Trade not found.</p>"; return; }
+  const [l] = await rest(`public_listings?id=eq.${t.listing_id}&select=*`);
+  main.innerHTML = "";
+  main.append(
+    el("p", { class: "label" }, `Loop trade · ${t.id.slice(0, 6)}`),
+    el("div", { style: "display:flex;align-items:center;gap:16px;flex-wrap:wrap" },
+      el("h1", { style: "margin:0;font-size:clamp(32px,6vw,52px)" }, `${t.quantity} ${MATERIAL_TITLES[t.material] ?? t.material}`),
+      el("span", { class: `stamp ${t.status}` }, TRADE_WORDS[t.status] ?? t.status)),
+    el("p", { class: "muted" }, "Seller ", el("a", { href: `ledger.html?account=${t.seller}` }, t.seller), " → buyer ", el("a", { href: `ledger.html?account=${t.buyer}` }, t.buyer_name ?? t.buyer),
+      ` · ${t.price} ECOIN each · total ${t.total} ECOIN${t.distance_km !== null ? ` · ${t.distance_km} km apart` : ""}`),
+  );
+
+  const photos = el("div", { class: "grid g2", style: "margin:20px 0" });
+  if (l?.photo_path) photos.append(el("figure", { style: "margin:0" }, el("div", { class: "photo" }, el("img", { src: photoUrl(l.photo_path), alt: "lot when listed" })),
+    el("figcaption", { class: "small muted", style: "margin-top:6px" }, `When listed: SAM 3.1 counted ${l.sam_count} · grade ${l.grade ?? "—"} · `, el("a", { href: `listing.html?id=${l.id}` }, "listing"))));
+  if (t.delivery_photo_path) photos.append(el("figure", { style: "margin:0" }, el("div", { class: "photo" }, el("img", { src: photoUrl(t.delivery_photo_path), alt: "delivery" })),
+    el("figcaption", { class: "small muted", style: "margin-top:6px" }, "Seller's delivery photo")));
+  if (photos.children.length) main.append(photos);
+
+  const left = el("div", { class: "card" }, el("p", { class: "label" }, "Timeline"),
+    el("ol", { class: "timeline" }, (t.history ?? []).map((h) => el("li", {}, el("div", {}, el("b", {}, TRADE_WORDS[h.status] ?? h.status), el("div", { class: "small muted" }, `${new Date(h.at).toLocaleString()} · ${h.note}`))))));
+  const right = el("div", { class: "card" }, el("p", { class: "label" }, "Money on the ledger"),
+    entries.length ? el("table", { class: "kv" }, entries.map((e) => el("tr", {}, el("td", {}, SYSTEM_NAMES[e.account_id] ?? e.account_id, el("div", { class: "small muted" }, e.kind)),
+      el("td", { class: "mono" }, el("a", { href: `ledger.html#seq-${e.seq}` }, `${e.amount > 0 ? "+" : ""}${e.amount} · #${e.seq}`))))) : el("p", { class: "muted" }, "Nothing has moved yet."),
+    el("p", { class: "small muted", style: "margin-top:10px" }, "On release the seller pays 2% marketplace + 1% escrow fees; 30% of every fee goes to the ECO Reserve."));
+  main.append(el("div", { class: "grid g2" }, left, right));
+
+  if (t.dispute_reason || t.mediation || t.decision) {
+    const m = t.mediation, d = t.decision;
+    main.append(el("div", { class: "grid g2", style: "margin-top:16px" },
+      el("div", { class: "card" }, el("p", { class: "label" }, "Dispute · what Muse Spark recommended"),
+        el("p", {}, el("b", {}, "Buyer: "), t.dispute_reason ?? "—"),
+        m ? [el("p", {}, el("b", {}, `${m.recommendation} (${m.seller_share_pct}% to seller)`), ` · confidence ${Math.round(m.confidence * 100)}%`), el("p", { class: "small" }, m.evidence_summary), el("p", { class: "small muted" }, m.reasoning)] : el("p", { class: "muted" }, "No AI recommendation yet."),
+        el("p", { class: "small muted" }, "Advice only. A person decides.")),
+      el("div", { class: "card" }, el("p", { class: "label" }, "Decision · by a person"),
+        d ? [el("p", {}, el("b", {}, `${d.outcome} · ${d.seller_share_pct}% to seller`)), el("p", { class: "small" }, d.note), el("p", { class: "small muted" }, `Decided ${fmtDate(d.at)} by reviewer ${d.by}`)] : el("p", { class: "muted" }, "Waiting for an ECO reviewer. The ECOIN stays in escrow."))));
+  }
+}
+load().catch((e) => { main.innerHTML = ""; main.append(el("p", {}, "Could not load this trade."), el("p", { class: "small muted" }, String(e.message ?? e))); });
+</script>
+</body>
+</html>

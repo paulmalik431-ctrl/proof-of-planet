@@ -8,24 +8,25 @@
 <body>
 <div id="nav"></div>
 <main class="wrap" style="padding-top:32px;padding-bottom:48px">
-  <p class="label">Public ledger · append-only · hash-chained</p>
+  <p class="label">Vault · public ledger · append-only · hash-chained</p>
   <h1 id="title" style="font-size:clamp(34px,6vw,56px)">ECOIN ledger</h1>
   <p class="lede" id="lede">Every ECOIN ever paid, in order. Each entry contains the hash of the one before it, so changing any past entry breaks every hash after it. Don't trust us — check it here, in your own browser.</p>
+  <div class="grid g4" id="vault" style="margin:6px 0 18px"></div>
   <p style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
     <button class="btn" id="verify" disabled>Verify the whole chain</button>
     <span id="result" class="mono small"></span>
   </p>
   <div class="table-scroll" style="margin-top:16px">
     <table class="ledger">
-      <thead><tr><th>#</th><th>When (UTC)</th><th>Account</th><th>ECOIN</th><th>For</th><th>Evidence</th><th>Hash</th><th>Previous</th></tr></thead>
-      <tbody id="rows"><tr><td colspan="8" class="muted">Loading…</td></tr></tbody>
+      <thead><tr><th>#</th><th>When (UTC)</th><th>Account</th><th>ECOIN</th><th>Kind</th><th>For</th><th>Evidence</th><th>Hash</th><th>Previous</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="9" class="muted">Loading…</td></tr></tbody>
     </table>
   </div>
-  <p class="small muted" style="margin-top:12px">Hash = SHA-256 of <span class="mono">seq|prev_hash|account|amount|kind|claim|memo|time</span>. The same formula runs in the database (<span class="mono">ledger_append</span>) and in this page.</p>
+  <p class="small muted" style="margin-top:12px">ECOIN is minted only by <b>reward</b> (a verified climate action) or a labelled test <b>deposit</b>; every other movement is a set of entries that sums to zero. Hash = SHA-256 of <span class="mono">seq|prev_hash|account|amount|kind|ref|memo|time</span>. The same formula runs in the database (<span class="mono">ledger_post</span>) and in this page.</p>
 </main>
 <script type="module">
-import { nav, rest, configured, el, short, notConfigured } from "./app.js";
-import { verifyChain } from "./js/ledger.js";
+import { nav, rest, configured, el, short, notConfigured, refLink, SYSTEM_NAMES } from "./app.js";
+import { verifyChain, supply } from "./js/ledger.js";
 document.getElementById("nav").replaceWith(nav());
 const account = new URLSearchParams(location.search).get("account");
 const tbody = document.getElementById("rows");
@@ -37,19 +38,27 @@ else {
   // The full chain is always loaded (verification needs every link); a wallet view just filters the display.
   const all = (await rest("public_ledger?select=*&order=seq.asc&limit=10000")).map((r) => ({ ...r, seq: Number(r.seq) }));
   const shown = account ? all.filter((r) => r.account_id === account) : all;
+  const bal = (a) => all.filter((r) => r.account_id === a).reduce((s, r) => s + r.amount, 0);
+  const sup = supply(all);
+  const card = (k, v, note) => el("div", { class: "card stat" }, el("b", {}, Number(v).toLocaleString()), el("span", {}, k), note ? el("div", { class: "small muted", style: "margin-top:4px" }, note) : null);
+  if (!account) document.getElementById("vault").append(
+    card("ECO Reserve", bal("eco_reserve"), "30% of every fee"),
+    card("In escrow now", bal("eco_escrow"), "Loop collateral"),
+    card("Fee revenue", bal("eco_treasury"), "ECO Treasury"),
+    card("ECOIN in existence", sup.total, sup.balanced ? `= ${sup.minted} minted by verified action + ${sup.deposits} test deposits ✓` : "supply mismatch ✗"));
   if (account) {
     const bal = shown.reduce((s, r) => s + r.amount, 0);
-    document.getElementById("title").textContent = `Wallet ${account}`;
+    document.getElementById("title").textContent = SYSTEM_NAMES[account] ?? `Wallet ${account}`;
     document.getElementById("lede").textContent = `Balance: ${bal.toLocaleString()} ECOIN across ${shown.length} entries. Verifying checks the entire public chain these entries belong to.`;
   }
   tbody.innerHTML = "";
-  if (!shown.length) tbody.append(el("tr", {}, el("td", { colspan: 8, class: "muted" }, "No entries yet.")));
+  if (!shown.length) tbody.append(el("tr", {}, el("td", { colspan: 9, class: "muted" }, "No entries yet.")));
   for (const r of [...shown].reverse()) {
     tbody.append(el("tr", { id: `seq-${r.seq}` },
       el("td", {}, r.seq), el("td", {}, r.at.replace("T", " ").slice(0, 19)),
-      el("td", {}, el("a", { href: `?account=${r.account_id}` }, r.account_id)),
-      el("td", {}, r.amount > 0 ? `+${r.amount}` : r.amount), el("td", {}, r.memo),
-      el("td", {}, r.claim_id ? el("a", { href: `claim.html?id=${r.claim_id}` }, "Evidence File") : "—"),
+      el("td", {}, el("a", { href: `?account=${r.account_id}` }, SYSTEM_NAMES[r.account_id] ?? r.account_id)),
+      el("td", {}, r.amount > 0 ? `+${r.amount}` : r.amount), el("td", { class: "mono small" }, r.kind), el("td", {}, r.memo),
+      el("td", {}, (() => { const l = refLink(r); return l ? el("a", { href: l[0] }, l[1]) : "—"; })()),
       el("td", { class: "hash", title: r.hash }, short(r.hash)), el("td", { class: "hash", title: r.prev_hash }, short(r.prev_hash))));
   }
   btn.disabled = false;

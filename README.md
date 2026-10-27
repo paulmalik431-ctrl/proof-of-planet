@@ -1,113 +1,137 @@
-# ECO — the Climate Action OS
+# ECO · Proof of Planet
 
-**ECO pays people for verified climate action, over WhatsApp, in any language. Meta AI checks every photo; fixed rules decide; a public, hash-chained ledger records every coin.**
+**ECO makes climate action attractive, and tradeable.**
+Bitcoin is mined with electricity. **ECOIN is minted by Proof of Planet**: you earn it for verified climate action, trade it for recyclables and spend it in shops. Everything happens on WhatsApp, in any language, and Meta AI checks the evidence.
 
-> Climate action you can check — so climate change is never "a hoax" again.
+[Live site](https://paulmalik431-ctrl.github.io/proof-of-planet/) · [Live demo, four phones](https://paulmalik431-ctrl.github.io/proof-of-planet/try.html) · [Atlas](https://paulmalik431-ctrl.github.io/proof-of-planet/atlas.html) · [Public ledger](https://paulmalik431-ctrl.github.io/proof-of-planet/ledger.html) · [Ghost Audit](evals/README.md)
 
-[Live site](https://paulmalik431-ctrl.github.io/eco-climate-os/) · [Try the agent in your browser](https://paulmalik431-ctrl.github.io/eco-climate-os/try.html) · [Public ledger](https://paulmalik431-ctrl.github.io/eco-climate-os/ledger.html) · [Ghost Audit results](evals/README.md)
-
-Built solo for the **Meta Global AI Developer Hackathon** (Startup track, theme: *Build for Your World*), Oct 26 – Nov 4, 2026. Everything in this repository was written during the event.
+Built solo for the **Meta Global AI Developer Hackathon** (Startup track, theme *Build for Your World*), Oct 26 – Nov 4, 2026. Everything in this repository was written during the event (see [What was built when](#what-was-built-during-the-hackathon)).
 
 ---
 
 ## The problem
 
-Millions of people plant trees, clean streets and collect plastic. Almost none of it is paid, because nobody can check it cheaply. Climate money goes to whoever can afford auditors, and the people doing the work stay poor. When results can't be checked, people stop believing them.
+Climate action and payments are broken for most people:
 
-## What ECO does
+- **Unverified.** Funders can't trust the evidence, so they check it by hand or don't pay.
+- **Unpaid and unbanked.** The people doing the work rarely earn from it, and 1.4 billion adults have no bank account (World Bank Global Findex 2021).
+- **Costly and hard to use.** Cards and payment platforms charge high fees and are hard for first-time users.
+- **Untradeable.** Climate waste and verified action have no simple market.
 
-1. **Report on WhatsApp.** "I planted a tree." Text or photo, any language.
-2. **The agent collects the evidence.** Muse Spark 1.3, using tool calls, asks for exactly what is missing: a photo, a before-and-after pair, or a location.
-3. **Meta AI looks.** SAM 3.1 finds and counts saplings, litter, bottles and cans. Muse Spark answers fixed questions: same place? still alive? edited?
-4. **Rules decide, not the model.** The verdict is *verified*, *needs better evidence* or *contradicted*, with plain reasons. Unclear evidence is never treated as an accusation.
-5. **ECOIN is paid on a public ledger.** Each entry is hash-chained to the last, so anyone can re-check the whole chain in their browser.
+ECO fixes all four.
 
-Every claim gets a public **Evidence File**: the photos with SAM's boxes drawn on them, what Muse Spark saw, the rule decision and the ledger entry.
+## Earn it. Trade it. Spend it. Fund it.
 
-## The design rule: the AI can look and talk, only rules can pay
+| | Engine | What it does | Meta |
+|---|---|---|---|
+| **Earn** | **Witness** | You plant a tree, clean up a place or recycle, then send photos on WhatsApp. SAM 3.1 counts what matters and Muse Spark answers fixed questions. Fixed rules decide the result: *verified*, *needs better evidence* or *contradicted*. Only a verified result mints ECOIN. No proof, no token. | SAM 3.1, Muse Spark 1.3 |
+| **Trade** | **Loop** | People sell sorted bottles, cans, cardboard and e-waste to businesses. SAM counts the lot, Muse Spark grades it, and rules set the price. Loop matches each lot to the best buyer. The buyer's ECOIN sits in **escrow** until delivery. If there's a dispute, Muse Spark recommends a settlement and **a person decides**. | SAM 3.1, Muse Spark 1.3 |
+| **Spend** | **Glance** | You pay in shops, on buses and in apps with no card and no cash. The shop types your number, and you confirm with the one-time **WhatsApp code**. Face confirmation is on the roadmap, with no face database. | WhatsApp |
+| **Fund** | **Atlas** | Verified data becomes a live map and a brief for funders: what to fund, where action is needed and where the risk is. It is written by Muse Spark from public numbers only. | Muse Spark 1.3 |
+| | **Vault** | The escrow, plus an audited **Reserve** built from 30% of every fee. Everything sits on a public, append-only, hash-chained ledger. | |
 
-The agent has no tool that moves money. Its only route to a payment is `verify_claim`. That tool:
-- refuses unless the evidence is complete;
-- runs SAM 3.1 and Muse Spark;
-- applies the protocol's fixed rules;
-- credits the protocol's reward, never an amount the model chooses.
+All four engines run through one agent: **ECO on WhatsApp**, which is Muse Spark 1.3 with tool calling, using a different set of tools for a person, a business, a shop and a reviewer.
 
-The tests prove this: a model that calls `verify_claim` too early gets nothing (`tests/agent.test.ts`).
+## The design rule: the AI can look and talk, only rules can move money
+
+The model chooses which tool to call. The tools enforce the rules, and ECOIN moves through exactly four gates:
+
+1. **Mint** (`verify_claim`): only after Witness finds the evidence consistent. The amount comes from the protocol, never from the model.
+2. **Escrow** (`accept_offer`): only from the buyer's own balance.
+3. **Release** (`confirm_delivery`, `resolve_dispute`): only when the buyer confirms delivery, or a human reviewer decides a dispute they are not part of.
+4. **Pay** (Glance): only with the customer's 6-digit WhatsApp code. The code is stored as a salted hash, expires in 5 minutes and allows 3 tries.
+
+The ledger enforces the same rules twice, once in TypeScript (`checkLegs`) and once in SQL (`ledger_post`):
+- minting can only credit;
+- every transfer sums to zero;
+- no account can go below zero;
+- every entry is hash-chained to the one before it and can't be updated or deleted.
+
+The tests show that a model calling tools out of order gets nothing (`tests/agent.test.ts`, `tests/loop-glance.test.ts`).
+
+## How ECO makes money
+
+| Revenue | Rate | |
+|---|---|---|
+| Marketplace fees | 2% | on every Loop trade |
+| Escrow fees | 1% | on every Loop trade |
+| Payment fees | 1% | on every Glance payment, paid by the shop |
+| Verification fees | per project | funds and developers pay for Witness checks and Atlas briefs |
+| App revenue | today | advertising and Boost subscriptions in the ECO App |
+
+30% of every fee goes to the **ECO Reserve**, which anyone can see on the ledger. **We earn from fees, not from ECOIN's price.**
 
 ## How ECO uses Meta
 
-| Meta technology | What it does in ECO | Code |
+| Meta technology | Where | Code |
 |---|---|---|
-| **WhatsApp Cloud API** | Where people live: intake, replies, media, location pins | `_core/whatsapp.ts`, `functions/whatsapp` |
-| **Muse Spark 1.3**, tool calling | The agent: multilingual conversation that drives each claim through 6 tools | `_core/agent.ts` |
-| **Muse Spark 1.3**, vision + JSON schema | Answers each protocol's yes/no/unclear questions across photos | `_core/verify.ts` |
-| **SAM 3.1** | Counts saplings, litter, bottles and cans; counts drive rewards; boxes drawn on Evidence Files | `_core/sam.ts`, `_core/verify.ts` |
+| **WhatsApp Cloud API** | Intake, replies, photos, location pins, messages between people, Glance codes | `_core/whatsapp.ts`, `functions/whatsapp` |
+| **Muse Spark 1.3** with tool calling | The agent: 23 tools across four roles, in any language | `_core/agent.ts`, `_core/tools.ts` |
+| **Muse Spark 1.3** with vision and JSON schema | Witness observations, Loop grading, dispute recommendations, Atlas briefs | `_core/verify.ts`, `_core/loop.ts`, `functions/atlas` |
+| **SAM 3.1** | Counts saplings, litter, bottles and cans. The counts drive rewards and prices, and the boxes are drawn on Evidence Files | `_core/sam.ts`, `_core/verify.ts`, `_core/loop.ts` |
 | **Muse Image** | Ghost Audit: generates fraudulent evidence to attack our own checks | `scripts/ghost-audit.ts` |
-| **Muse Voice Transcribe** | Voice-note claims (WAV path; WhatsApp's Opus notes are on the roadmap) | `_core/meta.ts` |
+| **Muse Voice Transcribe** | Voice-note claims (WAV path ready; WhatsApp's Opus notes are on the roadmap) | `_core/meta.ts` |
 
-Only Standard-mode models are used. `-contributor` models, which can train on data, are refused in code.
-
-## What ECO pays for (protocols are data, not code)
-
-| Action | Evidence | Reward |
-|---|---|---|
-| Tree planting | Photo + location | 100 ECOIN, then **400** if the tree is alive 30+ days later within 50 m |
-| Cleanup | Before + after photos + location | 50 + 10 per item SAM counts removed (max 300) |
-| Recycling | One photo of bottles and cans | 5 per item SAM counts (max 200) |
-
-To add a new action, write one entry in `_core/protocols.ts`. The agent, verifier, Evidence Files and ledger all pick it up.
+Only Standard-mode models are used; `-contributor` models are refused in code.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  P[Person on WhatsApp] -->|text, photo, location| W[WhatsApp Cloud API]
-  W -->|signed webhook| F[Edge function: whatsapp]
-  S[Browser simulator] --> G[Edge function: simulate]
-  F --> A[Agent · Muse Spark 1.3 + tools]
-  G --> A
-  A -->|verify_claim| V[Verifier]
-  V --> SAM[SAM 3.1 counts]
-  V --> SP[Muse Spark observations]
-  V --> R[Fixed rules]
-  R -->|verified only| L[(Hash-chained ECOIN ledger)]
-  V --> C[(Checks · append-only)]
-  L --> WEB[Public site: Evidence Files, ledger, stats]
-  C --> WEB
+  subgraph People on WhatsApp
+    P[Person] & B[Business] & S[Shop] & R[Reviewer]
+  end
+  P & B & S & R -->|text · photo · location| W[WhatsApp Cloud API]
+  W -->|signed webhook| F[whatsapp function]
+  D[Four-phone web demo] --> G[simulate function]
+  F & G --> A[ECO agent · Muse Spark 1.3 + tools]
+  A --> WI[Witness: SAM 3.1 + Muse Spark + rules]
+  A --> LO[Loop: grade · match · escrow · mediate]
+  A --> GL[Glance: WhatsApp code]
+  WI & LO & GL -->|legs that pass the rules| L[(Hash-chained ECOIN ledger · Vault + Reserve)]
+  L & WI & LO --> V[Public views]
+  V --> WEB[Site: Evidence Files · trades · ledger check · Atlas]
+  V --> AT[atlas function · Muse Spark brief]
 ```
 
-- **Backend:** Supabase. Postgres with row-level security, append-only triggers, a SQL `ledger_append` that hashes the same way the browser checks, public read-only views, Storage, and Deno Edge Functions.
-- **Web:** static pages on GitHub Pages. They read only the public views and never see phone numbers.
+- **Backend:** Supabase. Postgres with row-level security, append-only triggers, `ledger_post` (atomic, overdraft-proof, hashes exactly like the browser), public read-only views, Storage, and Deno Edge Functions (`whatsapp`, `simulate`, `atlas`).
 - **Core:** plain TypeScript in `supabase/functions/_core`. It runs the same in Deno (production), Bun (tests and scripts) and the browser (ledger check).
+- **Web:** static pages on GitHub Pages that read only the public views.
 
 ## Trust and safety
 
 - **Consent first.** Nothing is checked until the person agrees that their photos and location become a public Evidence File.
-- **Pseudonyms.** People appear as IDs like `eco_3f9a…`. Phone numbers stay in a private table.
-- **No accusations.** Ambiguous evidence is "needs better evidence", and the agent says which photo would settle it. Only *confident* answers on *hard* questions can contradict a claim.
-- **Tamper evidence.** Checks and ledger entries can't be updated or deleted (database triggers). The ledger is hash-chained, and anyone can verify it.
-- **Replay and fraud checks.** These catch reused photos (SHA-256), follow-up photos taken more than 50 m away, follow-ups that come too early, and signs of AI generation or editing.
-- **Cost caps.** Per-person and global daily limits apply to messages and verifications.
-- **ECOIN is a test ledger** in this build, not a token for sale.
+- **Pseudonyms only.** People appear as IDs like `eco_3f9a…`. Phone numbers stay private, and pickup points are rounded to about 1 km.
+- **No accusations.** Unclear evidence becomes "needs better evidence", and the agent says which photo would settle it.
+- **A person decides every dispute.** Both the AI's recommendation and the human decision are published on the trade page.
+- **No face database, and nothing biometric on the ledger.** Meta's models are not face-recognition models. Face confirmation will plug into Glance (`FaceVerifier` in `_core/glance.ts`) only with a certified provider, consent and a data-protection impact assessment. Until then, Glance uses the WhatsApp code.
+- **Fraud checks.** Reused photos are caught by SHA-256 across claims and listings. The checks also catch follow-ups far from the original spot or too early, possible AI-made images, lots that don't match the photo, and overdrafts.
+- **Cost caps.** Each person and the public demo have daily limits.
+- ECOIN in this build is a **test ledger**. Business test deposits are labelled on the ledger.
 
 ## Run it
 
 ```bash
-bun test                            # 30+ tests: SAM parser, rules, ledger, agent, WhatsApp — offline, no API cost
-MODEL_API_KEY=... bun run dev       # local site + live agent at http://localhost:8787
-MODEL_API_KEY=... bun run audit     # Ghost Audit (Muse Image fakes vs. the verifier)
+bun test                                   # 40 tests: SAM parser, rules, ledger & fees, Loop, Glance, agent, WhatsApp. Offline, no API cost.
+MODEL_API_KEY=... bun run dev              # local site + live agent at http://localhost:8787
+bun scripts/dev.ts --seed a.jpg b.jpg      # offline: a scripted earn → trade → spend story to explore the pages
+MODEL_API_KEY=... bun run audit            # Ghost Audit (Muse Image fakes vs. Witness)
 ```
 
 To deploy (Supabase, WhatsApp test number, GitHub Pages), see [docs/SETUP.md](docs/SETUP.md).
 
+## What was built during the hackathon
+
+This whole repository: the agent and its tools, Witness, Loop, Glance, Atlas, the ledger and Vault, the Supabase schema and functions, the web pages, the tests and the Ghost Audit. ECO and the ECO App existed before the event; none of their code is in this repository.
+
 ## Roadmap
 
-- **Merchants accept ECOIN.** Shops that take ECOIN earn carbon-credit-linked incentives.
-- **Face pay with a WhatsApp code as backup.** No card and no phone needed at checkout. No photos stored, and nothing biometric on the ledger.
-- **Voice-note claims** in any language: convert WhatsApp Opus to WAV, then Muse Voice Transcribe.
+- **Face confirmation for Glance** through a certified provider: 1:1 match on the customer's own enrolment, no face database.
+- **Voice-note claims**: convert WhatsApp Opus to WAV, then Muse Voice Transcribe.
 - **More protocols:** clean cookstoves, solar installs, mangrove restoration.
-- **Funder reports:** the verified actions behind each payout, exported for climate-finance buyers.
+- **Carbon-credit incentives** for merchants who accept ECOIN.
+- **Verification-as-a-service** for funds and developers, with Atlas briefs per project.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). Leaflet (BSD-2-Clause) is bundled in `web/vendor/leaflet`.

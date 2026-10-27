@@ -1,13 +1,17 @@
 // A scripted stand-in for the Meta Model API, so tests run offline and cost nothing.
 import { MetaClient, type ToolCall } from "../supabase/functions/_core/meta.ts";
 
+export type Turn = { text: string } | { tools: Array<[string, Record<string, unknown>]> };
+
 export interface Script {
   /** SAM detections per noun phrase (number of boxes returned). */
   sam: Record<string, number>;
-  /** Muse Spark observation returned for verification calls. */
+  /** Muse Spark observation returned for Witness verification calls. */
   observation: Record<string, unknown>;
+  /** JSON returned for other schema-constrained calls, by schema name (e.g. lot_observation, mediation). */
+  json?: Record<string, Record<string, unknown>>;
   /** Agent turns, consumed in order: either text or tool calls. */
-  agent: Array<{ text: string } | { tools: Array<[string, Record<string, unknown>]> }>;
+  agent: Array<Turn | (() => Turn)>;
 }
 
 export function fakeMeta(script: Script) {
@@ -26,9 +30,12 @@ export function fakeMeta(script: Script) {
     }
     if (u.endsWith("/chat/completions")) {
       if (body.response_format) {
-        return Response.json({ choices: [{ message: { role: "assistant", content: JSON.stringify(script.observation) }, finish_reason: "stop" }] });
+        const name = body.response_format.json_schema?.name as string;
+        const out = script.json?.[name] ?? script.observation;
+        return Response.json({ choices: [{ message: { role: "assistant", content: JSON.stringify(out) }, finish_reason: "stop" }] });
       }
-      const next = script.agent.shift() ?? { text: "ok" };
+      const queued = script.agent.shift() ?? { text: "ok" };
+      const next = typeof queued === "function" ? queued() : queued;
       if ("text" in next) return Response.json({ choices: [{ message: { role: "assistant", content: next.text }, finish_reason: "stop" }] });
       const tool_calls: ToolCall[] = next.tools.map(([name, args]) => ({ id: `call_${++callId}`, type: "function", function: { name, arguments: JSON.stringify(args) } }));
       return Response.json({ choices: [{ message: { role: "assistant", content: null, tool_calls }, finish_reason: "tool_calls" }] });

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas — ECO · Proof of Planet</title>
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="nav"></div>
+<main class="wrap" style="padding-top:28px;padding-bottom:48px">
+  <p class="label">Atlas · climate intelligence for funders</p>
+  <h1 style="font-size:clamp(34px,6vw,56px)">What to fund, where action is needed, where the risk is.</h1>
+  <p class="lede">Every dot on the map is about 5 km of verified activity. Its size shows how much was done; its colour shows integrity, meaning the share of claims that passed Witness. The brief is written by Muse Spark from these numbers only.</p>
+  <div class="grid g2" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);align-items:start" id="layout">
+    <div id="map"></div>
+    <div class="card" id="brief"><p class="muted">Loading…</p></div>
+  </div>
+</main>
+<script src="vendor/leaflet/leaflet.js"></script>
+<script type="module">
+import { nav, configured, el, notConfigured } from "./app.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+document.getElementById("nav").replaceWith(nav());
+if (matchMedia("(max-width: 760px)").matches) document.getElementById("layout").style.gridTemplateColumns = "1fr";
+const box = document.getElementById("brief");
+
+const map = L.map("map", { scrollWheelZoom: false }).setView([0, 20], 2);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: "© OpenStreetMap" }).addTo(map);
+
+const colour = (i) => (i === null ? "#888" : i >= 0.8 ? "#1d7a4c" : i >= 0.5 ? "#c58a00" : "#b3261e");
+
+if (!configured) { box.innerHTML = ""; notConfigured(box); }
+else {
+  const r = await fetch(`${SUPABASE_URL}/functions/v1/atlas`, { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }).then((x) => x.json());
+  const cells = r.cells ?? [];
+  const pts = [];
+  for (const c of cells) {
+    const size = Math.max(6, Math.min(30, 6 + Math.sqrt(c.verified + c.units_traded / 20) * 4));
+    L.circleMarker([c.lat, c.lng], { radius: size, color: colour(c.integrity), fillColor: colour(c.integrity), fillOpacity: 0.55, weight: 2 })
+      .bindPopup(`<b>${c.verified} verified actions</b><br>${c.trees} trees · ${c.trees_alive} alive after 30 days · ${c.cleanups} cleanups<br>${c.units_traded} recyclables traded · ${c.ecoin} ECOIN paid<br>Integrity ${c.integrity === null ? "—" : Math.round(c.integrity * 100) + "%"} · ${c.held_back} held back`)
+      .addTo(map);
+    pts.push([c.lat, c.lng]);
+  }
+  if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 12 });
+  const s = r.stats ?? {};
+  const b = r.brief;
+  box.innerHTML = "";
+  box.append(el("p", { class: "label" }, "Atlas brief"));
+  if (b) {
+    box.append(el("h3", {}, b.headline), el("p", { class: "small" }, b.summary),
+      el("p", { class: "label", style: "margin-top:14px" }, "Fund next"),
+      el("ol", { class: "small", style: "padding-left:18px" }, (b.fund_next ?? []).map((f) => el("li", { style: "margin-bottom:6px" }, el("a", { href: "#", onclick: (e) => { e.preventDefault(); map.setView([f.lat, f.lng], 12); } }, `${f.lat.toFixed(3)}, ${f.lng.toFixed(3)}`), ` — ${f.why}`))),
+      el("p", { class: "label" }, "Risks"), el("ul", { class: "small", style: "padding-left:18px" }, (b.risks ?? []).map((x) => el("li", {}, x))),
+      el("p", { class: "label" }, "Data gaps"), el("ul", { class: "small", style: "padding-left:18px" }, (b.data_gaps ?? []).map((x) => el("li", {}, x))),
+      el("p", { class: "small muted" }, `Written by Muse Spark 1.3 from the public numbers · ${r.generated_at ? new Date(r.generated_at).toLocaleString() : ""}`));
+  } else box.append(el("p", { class: "muted small" }, cells.length ? "The written brief appears once the Meta key is connected." : "No verified activity yet. Atlas fills in as people verify climate action."));
+  box.append(el("p", { class: "label", style: "margin-top:14px" }, "Totals"),
+    ...[["Verified actions", s.verified_actions], ["Trees alive after 30 days", s.trees_alive_30d], ["Recyclables traded", s.units_traded], ["Claims held back", s.claims_not_paid], ["ECOIN minted", s.ecoin_minted], ["ECO Reserve", s.reserve]]
+      .map(([k, v]) => el("div", { class: "kpi" }, el("span", {}, k), el("b", {}, Number(v ?? 0).toLocaleString()))));
+}
+</script>
+</body>
+</html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Evidence File — ECO</title>
+<title>Evidence File — ECO · Proof of Planet</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -33,7 +33,7 @@ async function load() {
     rest(`public_claims?id=eq.${id}&select=*`),
     rest(`public_evidence?claim_id=eq.${id}&select=*&order=created_at`),
     rest(`public_checks?claim_id=eq.${id}&select=*&order=created_at.desc`),
-    rest(`public_ledger?claim_id=eq.${id}&select=*`),
+    rest(`public_ledger?ref=eq.${id}&select=*`),
   ]);
   const c = claims[0];
   if (!c) { main.innerHTML = "<p>This Evidence File doesn't exist, or the claim hasn't been checked yet.</p>"; return; }
@@ -44,7 +44,7 @@ async function load() {
   main.innerHTML = "";
 
   main.append(
-    el("p", { class: "label" }, `Evidence file · ${c.id.slice(0, 8)}`),
+    el("p", { class: "label" }, `Witness · Evidence File · ${c.id.slice(0, 8)}`),
     el("div", { style: "display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:8px" },
       el("h1", { style: "margin:0;font-size:clamp(34px,6vw,56px)" }, PROTOCOL_TITLES[c.protocol] ?? c.protocol),
       el("span", { class: `stamp ${outcome}` }, OUTCOME_WORDS[outcome] ?? outcome)),

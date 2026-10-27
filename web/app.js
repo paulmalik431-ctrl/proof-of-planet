@@ -23,6 +23,17 @@ export async function fn(name, body) {
 export const photoUrl = (path) => `${SUPABASE_URL}/storage/v1/object/public/evidence/${path}`;
 
 export const PROTOCOL_TITLES = { tree_planting: "Tree planting", tree_survival: "Tree survival check", cleanup: "Cleanup", recycling: "Recycling drop-off" };
+export const MATERIAL_TITLES = { pet_bottles: "PET plastic bottles", cans: "Aluminium cans", cardboard: "Cardboard", e_waste: "E-waste" };
+export const TRADE_WORDS = { proposed: "Offered", escrowed: "In escrow", delivered: "Delivered", released: "Paid out", disputed: "In dispute", refunded: "Refunded", settled: "Settled by reviewer", declined: "Declined" };
+export const SYSTEM_NAMES = { eco_escrow: "ECO Escrow", eco_treasury: "ECO Treasury (fees)", eco_reserve: "ECO Reserve" };
+
+/** Where a ledger entry's ref points. */
+export function refLink(e) {
+  if (!e.ref) return null;
+  if (e.memo.startsWith("Witness")) return ["claim.html?id=" + e.ref, "Evidence File"];
+  if (e.memo.startsWith("Loop")) return ["trade.html?id=" + e.ref, "Trade"];
+  return null;
+}
 export const OUTCOME_WORDS = { consistent: "Verified", unresolved: "Needs better evidence", contradicted: "Contradicted" };
 
 export function el(tag, attrs = {}, ...kids) {
@@ -43,8 +54,9 @@ export const short = (h) => (h ? `${h.slice(0, 10)}…${h.slice(-6)}` : "");
 export function nav() {
   const wa = WHATSAPP_NUMBER ? el("a", { href: `https://wa.me/${WHATSAPP_NUMBER}?text=Hi%20ECO` }, "WhatsApp") : null;
   return el("nav", { class: "top" }, el("div", { class: "wrap" },
-    el("a", { class: "brand", href: "./" }, "ECO"),
-    el("a", { href: "try.html" }, "Try it"),
+    el("a", { class: "brand", href: "./" }, "ECO", el("span", { class: "brand-sub" }, " · Proof of Planet")),
+    el("a", { href: "try.html" }, "Live demo"),
+    el("a", { href: "atlas.html" }, "Atlas"),
     el("a", { href: "ledger.html" }, "Ledger"),
     wa,
     el("a", { href: REPO_URL }, "Code"),

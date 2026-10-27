@@ -118,7 +118,7 @@ export async function verifyClaim(meta: MetaClient, store: Store, claimId: strin
     });
     let credit: LedgerEntry | null = null;
     if (decision.outcome === "consistent" && decision.reward > 0) {
-      credit = await store.appendLedger({ account_id: claim.account_id, amount: decision.reward, kind: "reward", claim_id: claim.id, memo: p.title });
+      [credit] = await store.post([{ account_id: claim.account_id, amount: decision.reward, kind: "reward" }], claim.id, `Witness · ${p.title}`);
     }
     await store.updateClaim(claim.id, { status: decision.outcome, reward: decision.reward, verified_at: now.toISOString() });
     return { claim: (await store.claim(claim.id))!, check, credit };

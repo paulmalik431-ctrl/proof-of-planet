@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loop Listing — ECO · Proof of Planet</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="nav"></div>
+<main class="wrap" style="padding-top:32px;padding-bottom:48px" id="main"><p class="muted">Loading listing…</p></main>
+<script type="module">
+import { nav, rest, configured, el, photoUrl, fmtDate, notConfigured, MATERIAL_TITLES, TRADE_WORDS } from "./app.js";
+document.getElementById("nav").replaceWith(nav());
+const main = document.getElementById("main");
+const id = new URLSearchParams(location.search).get("id") ?? "";
+
+async function load() {
+  if (!configured) { main.innerHTML = ""; return notConfigured(main); }
+  if (!/^[0-9a-f-]{36}$/i.test(id)) { main.innerHTML = "<p>No listing id in the link.</p>"; return; }
+  const [[l], trades] = await Promise.all([rest(`public_listings?id=eq.${id}&select=*`), rest(`public_trades?listing_id=eq.${id}&select=*&order=created_at.desc`)]);
+  if (!l) { main.innerHTML = "<p>Listing not found.</p>"; return; }
+  const o = l.assessment?.observation ?? {};
+  main.innerHTML = "";
+  main.append(
+    el("p", { class: "label" }, `Loop listing · ${l.id.slice(0, 6)}`),
+    el("div", { style: "display:flex;align-items:center;gap:16px;flex-wrap:wrap" },
+      el("h1", { style: "margin:0;font-size:clamp(32px,6vw,52px)" }, `${l.quantity} ${l.unit === "kg" ? "kg " : ""}${MATERIAL_TITLES[l.material] ?? l.material}`),
+      el("span", { class: `stamp ${l.status}` }, l.status)),
+    el("p", { class: "muted" }, "Seller ", el("a", { href: `ledger.html?account=${l.seller}` }, l.seller), ` · listed ${fmtDate(l.created_at)}${l.lat !== null ? ` · pickup area ${l.lat}, ${l.lng}` : ""}`),
+    el("div", { class: "grid g2", style: "margin-top:20px" },
+      l.photo_path ? el("div", { class: "photo" }, el("img", { src: photoUrl(l.photo_path), alt: "the lot" })) : el("div", { class: "card muted" }, "No photo"),
+      el("div", { class: "card" },
+        el("p", { class: "label" }, "How Loop priced it"),
+        el("table", { class: "kv" },
+          el("tr", {}, el("td", {}, "SAM 3.1 count"), el("td", { class: "mono" }, String(l.sam_count))),
+          el("tr", {}, el("td", {}, "Muse Spark: material matches"), el("td", {}, el("span", { class: `tag ${o.material_matches}` }, o.material_matches ?? "—"))),
+          el("tr", {}, el("td", {}, "Muse Spark: sorted and clean"), el("td", {}, el("span", { class: `tag ${o.sorted_and_clean}` }, o.sorted_and_clean ?? "—"))),
+          el("tr", {}, el("td", {}, "Grade (rules)"), el("td", { class: "mono" }, l.grade ?? "—")),
+          el("tr", {}, el("td", {}, "Price (rules)"), el("td", { class: "mono" }, `${l.price} ECOIN / ${l.unit === "kg" ? "kg" : "item"}`)),
+          el("tr", {}, el("td", {}, "Value"), el("td", { class: "mono" }, `${l.price * l.quantity} ECOIN`))),
+        el("p", { class: "small", style: "margin-top:10px" }, o.notes ?? ""),
+        el("p", { class: "small muted" }, "Grade A = sorted & clean (100% of the reference price), B = unclear (80%), C = mixed (60%). The model observes; the rules set the price."))),
+  );
+  if (trades.length) main.append(el("div", { class: "card", style: "margin-top:16px" }, el("p", { class: "label" }, "Trades"),
+    trades.map((t) => el("p", {}, el("a", { href: `trade.html?id=${t.id}` }, `#${t.id.slice(0, 6)}`), ` · ${t.quantity} to ${t.buyer_name ?? t.buyer} · ${t.total} ECOIN · ${TRADE_WORDS[t.status] ?? t.status}`))));
+}
+load().catch((e) => { main.innerHTML = ""; main.append(el("p", {}, "Could not load this listing."), el("p", { class: "small muted" }, String(e.message ?? e))); });
+</script>
+</body>
+</html>

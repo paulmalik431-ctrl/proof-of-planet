@@ -1,7 +1,10 @@
-project_id = "eco-climate-os"
+project_id = "proof-of-planet"
 
 [functions.whatsapp]
 verify_jwt = false   # Meta calls this webhook; requests are checked with X-Hub-Signature-256
 
 [functions.simulate]
 verify_jwt = false   # public demo; protected by per-session and daily caps
+
+[functions.atlas]
+verify_jwt = false   # public read; the brief is cached for 6 hours to bound cost
