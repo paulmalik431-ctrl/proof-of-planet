@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
   const account = await deps.store.accountByPhone(phone);
   if (b.poll) return json({ replies: [], inbox: account ? await deps.store.drain(account.id) : [], phone, account_id: account?.id ?? null });
 
-  if ((await deps.store.bump("simulator")) > Number(env("SIM_DAILY_CAP", "500"))) {
+  if ((await deps.store.bump("simulator")) > Number(env("SIM_DAILY_CAP", "300"))) {
     return json({ replies: ["The public demo has reached today's limit. Please come back tomorrow, or message ECO on WhatsApp."], inbox: [], phone });
   }
   const base = { id: `sim_${crypto.randomUUID()}`, from: phone, at: new Date() };

@@ -26,7 +26,7 @@ The website is hosted on GitHub Pages from this repo, and the backend deploys fr
 | `WHATSAPP_APP_SECRET` | App settings → Basic → App secret |
 | `WHATSAPP_VERIFY_TOKEN` | Any random string you choose |
 | `OPS_PHONES` | Comma-separated WhatsApp numbers of ECO reviewers (digits only) |
-| optional caps | `SIM_DAILY_CAP` (500), `MESSAGES_PER_DAY` (80), `VERIFICATIONS_PER_DAY` (10) |
+| optional caps | `SIM_DAILY_CAP` (300), `MESSAGES_PER_DAY` (80), `VERIFICATIONS_PER_DAY` (10) |
 
 ## 2. WhatsApp Cloud API
 
