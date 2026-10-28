@@ -3,6 +3,7 @@
 // tools that apply fixed rules: Witness mints for verified action, Loop escrows trades,
 // Glance needs the customer's code. The model can talk, look and ask. It cannot move money.
 import type { ChatMessage, MetaClient } from "./meta.ts";
+import { safeDHash, type ImageDecoder } from "./phash.ts";
 import { nextMissingPhoto, PROTOCOLS, STARTABLE } from "./protocols.ts";
 import { sha256Hex } from "./ledger.ts";
 import { MATERIALS } from "./loop.ts";
@@ -30,6 +31,7 @@ export interface AgentDeps {
   /** True for simulator numbers: sandbox reviewers may only decide sandbox disputes. */
   isSandbox?: (phone: string) => boolean;
   transcribe?: (audio: { bytes: Uint8Array; mime: string }) => Promise<string | null>;
+  decodeImage?: ImageDecoder;
   log?: (event: string, data?: unknown) => void;
 }
 
@@ -111,6 +113,7 @@ async function fileInbound(c: Ctx, msg: Inbound): Promise<string> {
 
   if (msg.kind === "image" && msg.image) {
     const sha = await sha256Hex(msg.image.bytes);
+    const phash = safeDHash(c.deps.decodeImage, msg.image.bytes, msg.image.mime);
     const path = await store.savePhoto(msg.image.bytes, msg.image.mime);
     const caption = msg.image.caption ? ` Caption: "${msg.image.caption}".` : "";
     if (active) {
@@ -119,16 +122,16 @@ async function fileInbound(c: Ctx, msg: Inbound): Promise<string> {
       let role = nextMissingPhoto(p, have)?.role ?? null;
       if (!role && p.photos.length === 1) { role = p.photos[0].role; await store.supersede(active.id, role); }
       if (role) {
-        await store.addEvidence({ claim_id: active.id, account_id: account.id, kind: "photo", role, path, sha256: sha, lat: null, lng: null, text: null });
+        await store.addEvidence({ claim_id: active.id, account_id: account.id, kind: "photo", role, path, sha256: sha, phash, lat: null, lng: null, text: null });
         if (active.status === "unresolved") await store.updateClaim(active.id, { status: "collecting" });
         return `[sent a photo — filed as "${role}" for the ${p.title} claim]${caption}`;
       }
     }
     if (listing) {
-      await store.updateListing(listing.id, { photo_path: path, photo_sha256: sha });
+      await store.updateListing(listing.id, { photo_path: path, photo_sha256: sha, photo_phash: phash });
       return `[sent a photo — filed as the lot photo for the ${MATERIALS[listing.material].title} listing]${caption}`;
     }
-    await store.addEvidence({ claim_id: null, account_id: account.id, kind: "photo", role: null, path, sha256: sha, lat: null, lng: null, text: null });
+    await store.addEvidence({ claim_id: null, account_id: account.id, kind: "photo", role: null, path, sha256: sha, phash, lat: null, lng: null, text: null });
     return `[sent a photo — kept aside (it may be a new action, a lot to sell, or a delivery photo for a trade)]${caption}`;
   }
 
