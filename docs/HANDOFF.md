@@ -37,3 +37,26 @@ correctly rejected as reused). Results are public at `/rest/v1/public_checks` (a
 - Founder actions: WhatsApp Cloud API app (test number, webhook to `/functions/v1/whatsapp`), `OPS_PHONES`, a real buyer/shop for the video.
 
 Never put keys in the repo, logs or chat. Never weaken escrow/ledger checks to make something pass.
+
+## Until Monday Nov 2 — Codex owns the build
+Claude's usage resets on **Monday, Nov 2**. Until then Codex is the only engineer. Code freeze is Nov 3; submission Nov 4, 6 PM Nairobi.
+
+**Order of work (stop and report if blocked; don't skip ahead past a broken live flow):**
+1. Wed–Thu: confirm the empty-reply fix live; fix SAM (item 4 above); re-measure latency (item 5).
+2. Thu: **live Loop hero flow** in the simulator: farmer lists rice husk with the one-time code on paper in the photo → business bids →
+   accept (escrow) → delivered → buyer intake on `web/intake.html` with a partial quantity → seller paid, rest refunded. Fix what breaks.
+   This must work before anything else on the list.
+3. Fri: K3 receipt step trace (agent steps, model ids, latency shown on `trade.html` / `claim.html`), then C6 evaluation protocol.
+4. Sat: C1 near-duplicate photos, then C4 cheat lab.
+5. Sun: C3 ledger fingerprint; C5/C2 only if 1–4 are solid (cut-line).
+
+**Working rules while Claude is away:**
+- Small PRs on `codex/<task>`; merge to `main` yourself only when `bun test` passes **and** the live simulator still completes a tree claim
+  and a Loop trade after deploy. If a deploy breaks live, revert first, then fix.
+- Keep `docs/STATUS.md` updated at the end of each work session: what shipped (commit ids), live test results, what's broken, open questions for
+  the founder. Claude reads this first on Monday.
+- Anything needing a key, account, payment or a real person (WhatsApp app, buyer, shop, filming) → write it in `docs/STATUS.md` under
+  "Founder actions" and ask the founder; never invent credentials or fake data in public views.
+- Don't touch the submission copy, video script or X posts; Claude does those Monday with the founder.
+
+**Monday handover to Claude:** `docs/STATUS.md` current, `main` green, live demo working, list of known issues.
