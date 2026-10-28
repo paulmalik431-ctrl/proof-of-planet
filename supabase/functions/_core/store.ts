@@ -1,11 +1,12 @@
 // Storage interface used by the agent, Witness, Loop and Glance, plus an in-memory implementation
 // for tests, the eval scripts and local runs. Production uses SupabaseStore.
-import type { ChatMessage } from "./meta.ts";
+import type { ChatMessage, ModelCallTrace } from "./meta.ts";
 import type { ProtocolId } from "./protocols.ts";
 import type { Decision, Observation } from "./rules.ts";
 import { checkLegs, GENESIS, type Leg, type LedgerEntry, seal, SYSTEM } from "./ledger.ts";
 import type { Demand, Listing, Trade } from "./loop.ts";
 import type { Payment } from "./glance.ts";
+import { hamming } from "./phash.ts";
 
 export type Role = "person" | "business" | "shop" | "ops";
 
@@ -41,6 +42,7 @@ export interface Evidence {
   role: string | null;
   path: string | null;
   sha256: string | null;
+  phash?: string | null;
   lat: number | null;
   lng: number | null;
   text: string | null;
@@ -55,7 +57,7 @@ export interface Check {
   observation: Observation;
   counts: Record<string, number>;
   boxes: Record<string, Array<{ x1: number; y1: number; x2: number; y2: number; w: number; h: number; c: number | null; label: string }>>;
-  models: { segmentation: string; reasoning: string; calls: number; ms: number };
+  models: { segmentation: string; reasoning: string; calls: number; ms: number; trace?: ModelCallTrace[] };
   created_at: string;
 }
 
@@ -96,6 +98,7 @@ export interface Store {
   supersede(claimId: string, role: string): Promise<void>;
   /** Same image bytes already used in another claim or listing. */
   photoHashUsedElsewhere(sha256: string, ref: string): Promise<boolean>;
+  photoNearDuplicate(phash: string, ref: string, maxDistance?: number): Promise<string | null>;
 
   addCheck(c: New<Check>): Promise<Check>;
 
@@ -186,6 +189,12 @@ export class MemoryStore implements Store {
   async photoHashUsedElsewhere(sha: string, ref: string) {
     return this.evidence.some((e) => e.sha256 === sha && e.claim_id !== null && e.claim_id !== ref)
       || this.listings.some((l) => l.photo_sha256 === sha && l.id !== ref && l.status !== "draft");
+  }
+  async photoNearDuplicate(phash: string, ref: string, maxDistance = 6) {
+    const evidence = this.evidence.find((e) => e.phash && e.claim_id !== null && e.claim_id !== ref && hamming(e.phash, phash) <= maxDistance);
+    if (evidence) return evidence.claim_id;
+    const listing = this.listings.find((l) => l.photo_phash && l.id !== ref && l.status !== "draft" && hamming(l.photo_phash, phash) <= maxDistance);
+    return listing?.id ?? null;
   }
 
   async addCheck(c: New<Check>) { return this.add<Check>(this.checks, c as unknown as Record<string, unknown>); }
