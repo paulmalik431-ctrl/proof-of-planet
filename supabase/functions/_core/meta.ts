@@ -115,7 +115,13 @@ export class MetaClient {
     const choice = j?.choices?.[0];
     if (!choice?.message) throw new MetaError(`${model} returned no message.`);
     const message = choice.message as ChatMessage;
+    // Some responses carry content as parts ([{type:"text",text}]) rather than a string.
+    const raw = message.content as unknown;
+    if (Array.isArray(raw)) message.content = raw.map((p) => (typeof p === "string" ? p : typeof p?.text === "string" ? p.text : "")).join("");
     if (typeof message.content === "string") message.content = stripReasoning(message.content);
+    if (!message.content && !message.tool_calls?.length) {
+      console.log("chat_empty", JSON.stringify({ model, finish: choice.finish_reason, keys: Object.keys(choice.message), usage: j?.usage, sample: JSON.stringify(choice.message).slice(0, 400) }));
+    }
     return { message, finish: choice.finish_reason ?? "stop" };
   }
 
