@@ -7,5 +7,9 @@
     "dev": "bun scripts/dev.ts",
     "audit": "bun scripts/ghost-audit.ts",
     "build:web": "bun build supabase/functions/_core/ledger.ts --outfile web/js/ledger.js --format esm"
+  },
+  "devDependencies": {
+    "jpeg-js": "^0.4.4",
+    "upng-js": "^2.1.0"
   }
 }
