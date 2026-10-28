@@ -6,6 +6,7 @@ import type { Leg, LedgerEntry } from "../_core/ledger.ts";
 import type { Demand, Listing, Trade } from "../_core/loop.ts";
 import type { Payment } from "../_core/glance.ts";
 import { bytesToDataUrl } from "../_core/meta.ts";
+import { hamming } from "../_core/phash.ts";
 
 const BUCKET = "evidence";
 type R<T> = { data: T | null; error: { message: string; code?: string } | null };
@@ -51,12 +52,35 @@ export class SupabaseStore implements Store {
   async setEvidenceRole(id: string, role: string) { await this.upd("evidence", id, { role }, "set role"); }
   async consumeEvidence(ids: string[]) { if (ids.length) must(await this.db.from("evidence").update({ superseded: true }).in("id", ids), "consume"); }
   async supersede(claimId: string, role: string) { must(await this.db.from("evidence").update({ superseded: true }).eq("claim_id", claimId).eq("role", role), "supersede"); }
+  async photoNearDuplicate(phash: string, ref: string, maxDistance = 6) {
+    const [e, l] = await Promise.all([
+      this.db.from("evidence").select("claim_id,phash").not("phash", "is", null).not("claim_id", "is", null).neq("claim_id", ref).order("created_at", { ascending: false }).limit(2000),
+      this.db.from("listings").select("id,photo_phash").not("photo_phash", "is", null).neq("id", ref).neq("status", "draft").order("created_at", { ascending: false }).limit(2000),
+    ]);
+    const evidence = must(e, "near duplicate evidence") as Array<{ claim_id: string; phash: string }>;
+    const listings = must(l, "near duplicate listings") as Array<{ id: string; photo_phash: string }>;
+    return evidence.find((row) => hamming(row.phash, phash) <= maxDistance)?.claim_id
+      ?? listings.find((row) => hamming(row.photo_phash, phash) <= maxDistance)?.id
+      ?? null;
+  }
+
   async photoHashUsedElsewhere(sha: string, ref: string) {
     const [e, l] = await Promise.all([
       this.db.from("evidence").select("id").eq("sha256", sha).not("claim_id", "is", null).neq("claim_id", ref).limit(1),
       this.db.from("listings").select("id").eq("photo_sha256", sha).neq("id", ref).neq("status", "draft").limit(1),
     ]);
     return (must(e, "dup") as unknown[]).length > 0 || (must(l, "dup") as unknown[]).length > 0;
+  }
+  async photoNearDuplicate(phash: string, ref: string, maxDistance = 6) {
+    const [e, l] = await Promise.all([
+      this.db.from("evidence").select("claim_id,phash").not("phash", "is", null).not("claim_id", "is", null).neq("claim_id", ref).order("created_at", { ascending: false }).limit(2000),
+      this.db.from("listings").select("id,photo_phash").not("photo_phash", "is", null).neq("id", ref).neq("status", "draft").order("created_at", { ascending: false }).limit(2000),
+    ]);
+    const evidence = must(e, "near duplicate evidence") as Array<{ claim_id: string; phash: string }>;
+    const listings = must(l, "near duplicate listings") as Array<{ id: string; photo_phash: string }>;
+    return evidence.find((row) => hamming(row.phash, phash) <= maxDistance)?.claim_id
+      ?? listings.find((row) => hamming(row.photo_phash, phash) <= maxDistance)?.id
+      ?? null;
   }
 
   async addCheck(c: New<Check>) { return this.ins<Check>("checks", c, "add check"); }
