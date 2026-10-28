@@ -56,6 +56,18 @@ async function load() {
   for (const p of parentPhotos) gallery.append(photoWithBoxes(p.path, [], "Original planting photo (earlier claim)"));
   for (const p of photos) gallery.append(photoWithBoxes(p.path, k?.boxes?.[p.role], `${p.role} · SAM 3.1 found ${k?.counts?.[p.role] ?? 0} · sha256 ${short(p.sha256)}`));
   main.append(gallery);
+  const claimSteps = [
+    { at: c.created_at, title: "Claim opened", detail: "Witness started this evidence record." },
+    ...photos.map((photo) => ({ at: photo.created_at, title: "Evidence received: " + (photo.role ?? "photo"), detail: "SHA-256 " + short(photo.sha256) })),
+  ];
+  if (k) claimSteps.push({ at: k.created_at, title: "Evidence checked", detail: (k.models?.calls ?? 0) + " model calls · " + ((k.models?.ms ?? 0) / 1000).toFixed(1) + " s · " + (OUTCOME_WORDS[k.decision.outcome] ?? k.decision.outcome) });
+  for (const entry of ledger) if (entry.amount > 0) claimSteps.push({ at: entry.at, title: "Reward posted", detail: "+" + entry.amount + " ECOIN · ledger #" + entry.seq });
+  claimSteps.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  main.append(el("div", { class: "card", style: "margin-bottom:16px" },
+    el("p", { class: "label" }, "Receipt step trace"),
+    el("ol", { class: "timeline" }, claimSteps.map((step) => el("li", {},
+      el("b", {}, step.title), el("div", { class: "small muted" }, fmtDate(step.at) + " · " + step.detail))))));
+
 
   if (k) {
     const o = k.observation;
@@ -77,6 +89,11 @@ async function load() {
     ));
     main.append(el("p", { class: "small muted", style: "margin-top:16px" },
       `Checked ${fmtDate(k.created_at)} by ${k.models.segmentation} and ${k.models.reasoning} · ${k.models.calls} model calls · ${(k.models.ms / 1000).toFixed(1)} s. Meta's models observe; fixed rules decide; only a verified decision pays.`));
+    const trace = k.models.trace ?? [];
+    if (trace.length) main.append(el("div", { class: "card", style: "margin-top:12px" },
+      el("p", { class: "label" }, "Model call trace"),
+      el("ol", { class: "timeline" }, trace.map((call) => el("li", {},
+        el("b", {}, call.model), el("div", { class: "small muted" }, `${call.endpoint} · ${call.ms} ms · ${call.ok ? "completed" : "failed"}`))))));
   }
 }
 load().catch((e) => { main.innerHTML = ""; main.append(el("p", {}, "Could not load this Evidence File."), el("p", { class: "small muted" }, String(e.message ?? e))); });
