@@ -25,18 +25,18 @@ async function seed(files: string[]) {
   const say = (text: string): Turn => ({ text });
   const tid = () => store.trades[0].id.slice(0, 6);
   const { meta: fm } = fakeMeta({
-    sam: { sapling: 1, "plastic bottle": 120 },
+    sam: { sapling: 1, sack: 12 },
     observation: { answers: { young_tree_in_ground: "yes", recently_planted: "yes", potted_or_indoor: "no" }, possibly_ai_generated_or_edited: false, confidence: 0.92, notes: "A young tree being planted in freshly dug soil.", better_evidence: "" },
-    json: { lot_observation: { material_matches: "yes", sorted_and_clean: "yes", estimated_quantity: 120, possibly_ai_generated_or_edited: false, confidence: 0.88, notes: "Sorted clear PET bottles in bags." } },
+    json: { lot_observation: () => ({ identified_as: "rice_husk", matches_claim: "yes", condition_good: "yes", code_seen: store.listings.at(-1)?.challenge ?? "", estimated_quantity: 600, possibly_ai_generated_or_edited: false, confidence: 0.88, notes: "About twelve sacks of dry, clean rice husk; the code is on paper in front." }) },
     agent: [
       T("start_action", { action: "tree_planting" }), say("Send a photo."), say("Location?"), T("verify_claim"), say("Verified: +100 ECOIN."),
-      T("sell_waste", { material: "pet_bottles", quantity: 120 }), say("Photo?"), say("Location?"), T("publish_listing"), say("Listed."),
-      T("register_business", { name: "GreenCycle Recyclers" }), say("ok"), T("top_up_test_ecoin"), say("ok"), say("ok"),
-      T("buy_waste", { material: "pet_bottles", quantity: 1000, max_price: 3 }), say("Offer found."),
+      T("sell_waste", { material: "rice_husk", quantity: 600 }), say("Photo?"), say("Location?"), T("publish_listing"), say("Listed."),
+      T("register_business", { name: "Mwea Briquettes" }), say("ok"), T("top_up_test_ecoin"), say("ok"), say("ok"),
+      T("buy_waste", { material: "rice_husk", quantity: 1000, max_price: 4 }), say("Offer found."),
       () => T("accept_offer", { trade_id: tid() }), say("Escrowed."),
       say("Got the delivery photo."),
       () => T("mark_delivered", { trade_id: tid() }), say("Buyer notified."),
-      () => T("confirm_delivery", { trade_id: tid() }), say("Released."),
+      () => T("confirm_delivery", { trade_id: tid(), accepted_quantity: 560, grade: "A", note: "two sacks damp" }), say("Released."),
       T("register_shop", { name: "Mama Mboga Grocers" }), say("ok"),
       () => T("charge_customer", { phone: store.accounts.find((a) => a.phone === "999000000001")!.phone, amount: 120 }), say("Code sent."),
     ],
@@ -50,13 +50,13 @@ async function seed(files: string[]) {
   await m(P, { text: "I planted a tree" });
   await m(P, { kind: "image", image: await img(files[0]) });
   await m(P, { kind: "location", location: { lat: -1.2921, lng: 36.8219 } });
-  await m(P, { text: "I have 120 bottles to sell" });
+  await m(P, { text: "I have 600 kg of rice husk to sell" });
   await m(P, { kind: "image", image: await img(files[1]) });
   await m(P, { kind: "location", location: { lat: -1.2862, lng: 36.8172 } });
-  await m(B, { text: "We are GreenCycle Recyclers" });
+  await m(B, { text: "We are Mwea Briquettes" });
   await m(B, { text: "top up" });
   await m(B, { kind: "location", location: { lat: -1.3032, lng: 36.8442 } });
-  await m(B, { text: "buy 1000 PET bottles up to 3 each" });
+  await m(B, { text: "buy 1000 kg rice husk up to 4 each" });
   await m(B, { text: `accept ${tid()}` });
   await m(P, { kind: "image", image: await img(files[2] ?? files[1]) });
   await m(P, { text: `delivered ${tid()}` });
@@ -93,7 +93,7 @@ function view(name: string): Record<string, unknown>[] {
       const done = store.trades.filter((t) => t.status === "released" || t.status === "settled");
       return [{ verified_actions: ok(), trees_planted: ok("tree_planting"), trees_alive_30d: ok("tree_survival"), cleanups: ok("cleanup"),
         claims_not_paid: store.claims.filter((c) => c.status === "unresolved" || c.status === "contradicted").length,
-        units_traded: sum(done.map((t) => t.quantity)), trades_completed: done.length, payments: store.payments.filter((p) => p.status === "paid").length,
+        units_traded: sum(done.map((t) => t.intake?.accepted_quantity ?? t.quantity)), trades_completed: done.length, payments: store.payments.filter((p) => p.status === "paid").length,
         ecoin_minted: sum(store.ledger.filter((e) => e.kind === "reward").map((e) => e.amount)), reserve: bal(SYSTEM.reserve), fee_revenue: bal(SYSTEM.treasury), in_escrow: bal(SYSTEM.escrow),
         people_paid: new Set(store.ledger.filter((e) => e.kind === "reward").map((e) => e.account_id)).size }];
     }

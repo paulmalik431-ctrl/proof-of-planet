@@ -23,7 +23,7 @@ export async function fn(name, body) {
 export const photoUrl = (path) => `${SUPABASE_URL}/storage/v1/object/public/evidence/${path}`;
 
 export const PROTOCOL_TITLES = { tree_planting: "Tree planting", tree_survival: "Tree survival check", cleanup: "Cleanup", recycling: "Recycling drop-off" };
-export const MATERIAL_TITLES = { pet_bottles: "PET plastic bottles", cans: "Aluminium cans", cardboard: "Cardboard", e_waste: "E-waste" };
+export const MATERIAL_TITLES = { rice_husk: "Rice husk", sawdust: "Sawdust and wood shavings", maize_cobs: "Maize cobs", coffee_pulp: "Coffee pulp and husks", used_cooking_oil: "Used cooking oil", food_waste: "Food and market waste", pet_bottles: "PET plastic bottles", cans: "Aluminium cans", cardboard: "Cardboard", e_waste: "E-waste" };
 export const TRADE_WORDS = { proposed: "Offered", escrowed: "In escrow", delivered: "Delivered", released: "Paid out", disputed: "In dispute", refunded: "Refunded", settled: "Settled by reviewer", declined: "Declined" };
 export const SYSTEM_NAMES = { eco_escrow: "ECO Escrow", eco_treasury: "ECO Treasury (fees)", eco_reserve: "ECO Reserve" };
 

@@ -24,7 +24,7 @@ async function load() {
   main.append(
     el("p", { class: "label" }, `Loop trade · ${t.id.slice(0, 6)}`),
     el("div", { style: "display:flex;align-items:center;gap:16px;flex-wrap:wrap" },
-      el("h1", { style: "margin:0;font-size:clamp(32px,6vw,52px)" }, `${t.quantity} ${MATERIAL_TITLES[t.material] ?? t.material}`),
+      el("h1", { style: "margin:0;font-size:clamp(32px,6vw,52px)" }, `${t.quantity} ${t.unit === "items" ? "" : t.unit + " "}${MATERIAL_TITLES[t.material] ?? t.material}`),
       el("span", { class: `stamp ${t.status}` }, TRADE_WORDS[t.status] ?? t.status)),
     el("p", { class: "muted" }, "Seller ", el("a", { href: `ledger.html?account=${t.seller}` }, t.seller), " → buyer ", el("a", { href: `ledger.html?account=${t.buyer}` }, t.buyer_name ?? t.buyer),
       ` · ${t.price} ECOIN each · total ${t.total} ECOIN${t.distance_km !== null ? ` · ${t.distance_km} km apart` : ""}`),
@@ -37,12 +37,19 @@ async function load() {
     el("figcaption", { class: "small muted", style: "margin-top:6px" }, "Seller's delivery photo")));
   if (photos.children.length) main.append(photos);
 
+  if (t.intake) {
+    const i = t.intake;
+    main.append(el("div", { class: "card", style: "margin-bottom:16px" },
+      el("p", { class: "label" }, "Second witness · the buyer's weighed intake"),
+      el("p", { style: "font-size:20px;margin:0 0 6px" }, el("b", {}, `${i.accepted_quantity} ${t.unit === "items" ? "items" : t.unit} accepted`), ` of ${t.quantity} escrowed${i.grade ? ` · grade ${i.grade}` : ""}`),
+      el("p", { class: "small muted", style: "margin:0" }, `Recorded by ${t.buyer_name ?? t.buyer} via ${i.via === "web" ? "the intake page" : "WhatsApp"} on ${new Date(i.at).toLocaleString()}${i.note ? ` · "${i.note}"` : ""}. Paid at the buyer's bid of ${t.price} ECOIN per ${t.unit === "items" ? "item" : t.unit}; AI estimates never set the amount.`)));
+  }
   const left = el("div", { class: "card" }, el("p", { class: "label" }, "Timeline"),
     el("ol", { class: "timeline" }, (t.history ?? []).map((h) => el("li", {}, el("div", {}, el("b", {}, TRADE_WORDS[h.status] ?? h.status), el("div", { class: "small muted" }, `${new Date(h.at).toLocaleString()} · ${h.note}`))))));
   const right = el("div", { class: "card" }, el("p", { class: "label" }, "Money on the ledger"),
     entries.length ? el("table", { class: "kv" }, entries.map((e) => el("tr", {}, el("td", {}, SYSTEM_NAMES[e.account_id] ?? e.account_id, el("div", { class: "small muted" }, e.kind)),
       el("td", { class: "mono" }, el("a", { href: `ledger.html#seq-${e.seq}` }, `${e.amount > 0 ? "+" : ""}${e.amount} · #${e.seq}`))))) : el("p", { class: "muted" }, "Nothing has moved yet."),
-    el("p", { class: "small muted", style: "margin-top:10px" }, "On release the seller pays 2% marketplace + 1% escrow fees; 30% of every fee goes to the ECO Reserve."));
+    el("p", { class: "small muted", style: "margin-top:10px" }, "The seller pays 2% marketplace + 1% escrow fees on what is accepted; 30% of every fee goes to the ECO Reserve. Anything not accepted returns to the buyer."));
   main.append(el("div", { class: "grid g2" }, left, right));
 
   if (t.dispute_reason || t.mediation || t.decision) {

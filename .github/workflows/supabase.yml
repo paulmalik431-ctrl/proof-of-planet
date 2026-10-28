@@ -19,6 +19,6 @@ jobs:
       - run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
       - run: supabase db push
       - run: |
-          for f in whatsapp simulate atlas; do
+          for f in whatsapp simulate atlas intake; do
             supabase functions deploy $f --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
           done

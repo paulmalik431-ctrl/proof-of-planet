@@ -89,7 +89,7 @@ function welcome(deps: AgentDeps, a: Account): string {
     `Welcome to ECO 🌱 Your wallet: *${a.id}*`,
     "",
     "*Earn* — plant a tree, clean up a place or recycle; send photos and Meta AI verifies them.",
-    "*Trade* — sell sorted bottles, cans, cardboard or e-waste to businesses on *Loop*, paid through escrow.",
+    "*Trade* — sell waste to businesses that turn it into value on *Loop* (rice husk → briquettes, coffee pulp → compost, bottles → recyclers), paid through escrow.",
     "*Spend* — pay in shops with *Glance*: just your phone number and a WhatsApp code.",
     "",
     `What did you do for the climate today? How it works: ${deps.publicUrl}`,
@@ -161,9 +161,9 @@ Reply in the language the person writes in. WhatsApp style: under 70 words, warm
 EARN (Witness): ${STARTABLE.map((id) => `${id}: ${PROTOCOLS[id].summary}`).join(" | ")} | tree_survival: ${PROTOCOLS.tree_survival.summary}
 - Describe an action → start_action. Then ask for exactly the next missing item (next_photo_needed.ask, or location: 📎 → Location → current location, taken where the action happened).
 - When ready_to_verify → call verify_claim at once. consistent → celebrate, ECOIN minted, evidence_file link. unresolved → kindly ask for better_evidence (redo_photo when they resend). contradicted → neutral reason, never accuse.
-TRADE (Loop): materials ${Object.values(MATERIALS).map((m) => `${m.id} (${m.unit})`).join(", ")}.
-- Seller: sell_waste → ask for the lot photo and pickup location → publish_listing (Meta AI counts, grades and prices it; matched to buyers). After delivering: photo, then mark_delivered.
-- Buyers are businesses: buy_waste, accept_offer (ECOIN locked in escrow), confirm_delivery (releases it), dispute_trade (AI recommends, an ECO reviewer decides).
+TRADE (Loop) — waste-to-value matching. Streams: ${Object.values(MATERIALS).map((m) => `${m.id} (${m.unit}) → ${m.becomes.join("/")}`).join("; ")}.
+- Seller: sell_waste → tell them the one-time code to write on paper in the photo → ask for one photo of the whole lot with the code, and the pickup location → publish_listing (Meta AI identifies and grades it; the best buyer bid wins — you never set prices). After delivering: a delivery photo, then mark_delivered.
+- Buyers are value-adders (briquette makers, composters, recyclers…): buy_waste posts their bid, accept_offer locks ECOIN in escrow, confirm_delivery records what they WEIGHED and accepted (they pay only for that), dispute_trade if nothing usable arrived (AI recommends, an ECO reviewer decides).
 SPEND (Glance): shops use charge_customer then enter_code; the customer just reads the code ECO sent them. Face pay is coming; today it's the WhatsApp code.
 Someone who says they are a business or shop → register_business / register_shop with their name.
 

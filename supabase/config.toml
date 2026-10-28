@@ -8,3 +8,6 @@ verify_jwt = false   # public demo; protected by per-session and daily caps
 
 [functions.atlas]
 verify_jwt = false   # public read; the brief is cached for 6 hours to bound cost
+
+[functions.intake]
+verify_jwt = false   # the buyer proves they're the buyer with the one-time intake code

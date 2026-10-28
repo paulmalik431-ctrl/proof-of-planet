@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Record Intake — ECO · Proof of Planet</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="nav"></div>
+<main class="wrap" style="padding-top:28px;padding-bottom:48px;max-width:620px" id="main">
+  <p class="label">Loop · buyer intake</p>
+  <h1 style="font-size:clamp(32px,7vw,48px)">Record what you weighed</h1>
+  <p class="lede" style="font-size:18px">You are the independent witness. ECO pays the seller only for what you weigh and accept, at your own bid. Anything you don't accept goes back to you.</p>
+  <div class="card" id="trade"><p class="muted">Loading the trade…</p></div>
+  <form class="card" id="form" style="margin-top:16px;display:grid;gap:14px" hidden>
+    <label>One-time intake code <span class="muted small">(sent to you on WhatsApp when you paid into escrow)</span>
+      <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required class="field" placeholder="6 digits"></label>
+    <label>Weighed and accepted <span id="unit" class="muted small"></span>
+      <input id="qty" type="number" min="0.1" step="0.1" required class="field"></label>
+    <label>Grade on arrival
+      <select id="grade" class="field"><option value="">Not graded</option><option value="A">A: clean, as described</option><option value="B">B: usable, some issues</option><option value="C">C: poor but accepted</option></select></label>
+    <label>Note <span class="muted small">(optional)</span>
+      <input id="note" maxlength="300" class="field" placeholder="e.g. 2 sacks damp, rest fine"></label>
+    <button class="btn" id="submit">Accept and release payment</button>
+    <p class="small muted" style="margin:0">Nothing usable arrived? Don't submit 0. Reply <b>dispute</b> on WhatsApp instead: an ECO reviewer decides, and the ECOIN stays in escrow until then.</p>
+  </form>
+  <div id="result" style="margin-top:16px"></div>
+</main>
+<style>.field{display:block;width:100%;margin-top:6px;padding:12px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:16px "IBM Plex Sans"} label{font-weight:600;font-size:15px}</style>
+<script type="module">
+import { nav, rest, fn, configured, el, notConfigured, MATERIAL_TITLES, TRADE_WORDS } from "./app.js";
+document.getElementById("nav").replaceWith(nav());
+const id = new URLSearchParams(location.search).get("id") ?? "";
+const box = document.getElementById("trade"), form = document.getElementById("form"), result = document.getElementById("result");
+
+if (!configured) { box.innerHTML = ""; notConfigured(box); }
+else if (!/^[0-9a-f-]{36}$/i.test(id)) box.innerHTML = "<p>This link is missing its trade id. Use the link ECO sent you on WhatsApp.</p>";
+else {
+  const [t] = await rest(`public_trades?id=eq.${id}&select=*`);
+  if (!t) box.innerHTML = "<p>Trade not found.</p>";
+  else {
+    const unit = t.unit === "items" ? "items" : t.unit;
+    box.innerHTML = "";
+    box.append(
+      el("p", { class: "label" }, `Trade #${t.id.slice(0, 6)} · ${TRADE_WORDS[t.status] ?? t.status}`),
+      el("h3", {}, `${t.quantity} ${unit} of ${MATERIAL_TITLES[t.material] ?? t.material}`),
+      el("p", { class: "small" }, `Your bid: ${t.price} ECOIN per ${t.unit === "items" ? "item" : t.unit} · in escrow: ${t.total} ECOIN`),
+    );
+    document.getElementById("unit").textContent = `(${unit}, at most ${t.quantity})`;
+    const q = document.getElementById("qty");
+    q.max = t.quantity; q.step = t.unit === "items" ? "1" : "0.1";
+    if (["escrowed", "delivered"].includes(t.status)) form.hidden = false;
+    else box.append(el("p", { class: "muted small" }, "This trade isn't waiting for intake."));
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("submit"); btn.disabled = true; result.innerHTML = "";
+      try {
+        const r = await fn("intake", { trade_id: id, code: document.getElementById("code").value, accepted_quantity: Number(q.value), grade: document.getElementById("grade").value, note: document.getElementById("note").value });
+        form.hidden = true;
+        result.append(el("div", { class: "card" },
+          el("p", {}, el("span", { class: "stamp released" }, "Accepted")),
+          el("p", {}, `You accepted ${r.accepted_quantity} ${unit}. The seller received ${r.seller_received} ECOIN after fees; ${r.returned_to_buyer} ECOIN came back to you.`),
+          el("p", {}, el("a", { href: `trade.html?id=${id}` }, "See the full receipt →"))));
+      } catch (err) {
+        result.append(el("p", { style: "color:var(--red)" }, String(err.message ?? err)));
+        btn.disabled = false;
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

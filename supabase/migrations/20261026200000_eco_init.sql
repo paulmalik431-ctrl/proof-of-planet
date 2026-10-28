@@ -73,11 +73,12 @@ create table public.listings (
   id uuid primary key default gen_random_uuid(),
   seller text not null references public.accounts(id),
   material text not null,
-  quantity integer not null,
+  quantity numeric not null,
   unit text not null,
   price integer not null default 0,
   grade text,
   sam_count integer not null default 0,
+  challenge text,            -- one-time code the seller writes on paper in the photo
   photo_path text,
   photo_sha256 text,
   lat double precision,
@@ -94,7 +95,8 @@ create table public.demands (
   buyer text not null references public.accounts(id),
   material text not null,
   quantity integer not null,
-  max_price integer not null,
+  max_price integer not null,   -- the buyer's bid per unit
+  min_grade text not null default 'C' check (min_grade in ('A', 'B', 'C')),
   lat double precision,
   lng double precision,
   radius_km double precision not null default 25,
@@ -117,6 +119,8 @@ create table public.trades (
   distance_km double precision,
   status text not null check (status in ('proposed', 'escrowed', 'delivered', 'released', 'disputed', 'refunded', 'settled', 'declined')),
   delivery_photo_path text,
+  intake jsonb,              -- the buyer's weighed acceptance (the second witness)
+  intake_code_hash text,     -- salted hash of the one-time code for the web intake page
   dispute jsonb,
   mediation jsonb,     -- Muse Spark's recommendation (advice only)
   decision jsonb,      -- the human reviewer's decision
@@ -267,7 +271,7 @@ create view public.public_listings as
 
 create view public.public_trades as
   select t.id, t.listing_id, t.seller, t.buyer, b.name as buyer_name, t.material, t.quantity, t.unit, t.price, t.total,
-         t.distance_km, t.status, t.delivery_photo_path, t.dispute->>'reason' as dispute_reason, t.mediation, t.decision, t.history, t.created_at
+         t.distance_km, t.status, t.delivery_photo_path, t.intake, t.dispute->>'reason' as dispute_reason, t.mediation, t.decision, t.history, t.created_at
   from public.trades t join public.accounts b on b.id = t.buyer;
 
 create view public.public_ledger as select * from public.ledger;
@@ -279,7 +283,7 @@ create view public.public_stats as
     (select count(*) from public.claims where status = 'consistent' and protocol = 'tree_survival') as trees_alive_30d,
     (select count(*) from public.claims where status = 'consistent' and protocol = 'cleanup') as cleanups,
     (select count(*) from public.claims where status in ('unresolved', 'contradicted')) as claims_not_paid,
-    (select coalesce(sum(quantity), 0) from public.trades where status in ('released', 'settled')) as units_traded,
+    (select coalesce(sum(coalesce((intake->>'accepted_quantity')::numeric, quantity)), 0) from public.trades where status in ('released', 'settled')) as units_traded,
     (select count(*) from public.trades where status in ('released', 'settled')) as trades_completed,
     (select count(*) from public.payments where status = 'paid') as payments,
     (select coalesce(sum(amount), 0) from public.ledger where kind = 'reward') as ecoin_minted,

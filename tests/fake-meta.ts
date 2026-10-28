@@ -9,7 +9,7 @@ export interface Script {
   /** Muse Spark observation returned for Witness verification calls. */
   observation: Record<string, unknown>;
   /** JSON returned for other schema-constrained calls, by schema name (e.g. lot_observation, mediation). */
-  json?: Record<string, Record<string, unknown>>;
+  json?: Record<string, Record<string, unknown> | (() => Record<string, unknown>)>;
   /** Agent turns, consumed in order: either text or tool calls. */
   agent: Array<Turn | (() => Turn)>;
 }
@@ -31,7 +31,8 @@ export function fakeMeta(script: Script) {
     if (u.endsWith("/chat/completions")) {
       if (body.response_format) {
         const name = body.response_format.json_schema?.name as string;
-        const out = script.json?.[name] ?? script.observation;
+        const j = script.json?.[name];
+        const out = typeof j === "function" ? j() : j ?? script.observation;
         return Response.json({ choices: [{ message: { role: "assistant", content: JSON.stringify(out) }, finish_reason: "stop" }] });
       }
       const queued = script.agent.shift() ?? { text: "ok" };
