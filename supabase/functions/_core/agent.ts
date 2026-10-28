@@ -180,12 +180,19 @@ async function converse(c: Ctx, userText: string): Promise<string> {
     ...c.session.history,
     { role: "user", content: userText },
   ];
+  let lastResult: unknown = null;
   for (let turn = 0; turn < 5; turn++) {
     const { message } = await c.deps.meta.chat({ messages, tools: toolsFor(c.account.roles), maxTokens: 600 });
     const calls = message.tool_calls ?? [];
     if (!calls.length) {
       const text = typeof message.content === "string" ? message.content.trim() : "";
-      return text || "Sorry, could you say that again?";
+      if (text) return text;
+      if (lastResult === null) return "Sorry, could you say that again?";
+      // Models sometimes go quiet after a tool result. Ask once for the reply, without tools; if still
+      // empty, describe the tool's own result so the person never loses an outcome.
+      const retry = await c.deps.meta.chat({ messages: [...messages, { role: "user", content: "[system] Now reply to the person about the result above, in their language." }], maxTokens: 600 }).catch(() => null);
+      const again = typeof retry?.message.content === "string" ? retry.message.content.trim() : "";
+      return again || describeResult(lastResult);
     }
     messages.push({ role: "assistant", content: message.content ?? null, tool_calls: calls });
     for (const call of calls) {
@@ -195,8 +202,21 @@ async function converse(c: Ctx, userText: string): Promise<string> {
       try { result = await runTool(c, call.function.name, args); }
       catch (e) { c.deps.log?.("tool_error", { tool: call.function.name, error: String(e) }); result = { error: "That didn't work. Nothing was changed." }; }
       c.deps.log?.("tool", { name: call.function.name, args });
+      lastResult = result;
       messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
     }
   }
   return "I'm still working on that — please send your message again in a moment.";
+}
+
+/** Plain-code fallback reply from a tool result (English; only used when the model returns nothing). */
+export function describeResult(r: unknown): string {
+  const o = (r ?? {}) as Record<string, unknown>;
+  if (typeof o.error === "string") return o.error;
+  const link = typeof o.evidence_file === "string" ? `\n${o.evidence_file}` : "";
+  if (o.outcome === "consistent") return `✅ Verified! ${o.ecoin_minted ?? 0} ECOIN added to your wallet.${link}`;
+  if (o.outcome === "unresolved") return `I need better evidence: ${o.better_evidence ?? (o.reasons as string[] | undefined)?.join(" ") ?? "please send a clearer photo."}${link}`;
+  if (o.outcome === "contradicted") return `This couldn't be verified: ${(o.reasons as string[] | undefined)?.join(" ") ?? ""}${link}`;
+  if (typeof o.next === "string") return o.next;
+  return "Done.";
 }

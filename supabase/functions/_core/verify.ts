@@ -76,8 +76,10 @@ export async function verifyClaim(meta: MetaClient, store: Store, claimId: strin
     const jobs = meta.canSegment ? p.photos.flatMap((r) => r.sam.map((phrase) => ({ role: r.role, phrase }))) : [];
     const samRuns = await Promise.all(jobs.map(async (j) => {
       calls++;
-      const frames = parseSamOutput(await meta.segment(urls.get(j.role)!, j.phrase));
+      const raw = await meta.segment(urls.get(j.role)!, j.phrase);
+      const frames = parseSamOutput(raw);
       const f = frames.find((x) => x.frame === 0) ?? frames[0];
+      if (!f?.boxes.length) console.log("sam_zero", JSON.stringify({ phrase: j.phrase, raw: raw.slice(0, 600) }));
       return { role: j.role, phrase: j.phrase, boxes: (f?.boxes ?? []).filter((b) => b.c === null || b.c >= MIN_SAM_CONFIDENCE) };
     }));
     const counts: Record<string, number> = {};

@@ -51,6 +51,23 @@ describe("WhatsApp agent", () => {
     expect(log.some((l) => l.body?.model === "muse-spark-1.3" && l.body?.response_format)).toBe(true);
   });
 
+  test("if the model goes quiet after a tool, it is asked once more; if still silent, the result is described", async () => {
+    const turns = (retry: string) => [
+      { tools: [["start_action", { action: "tree_planting" }]] as [string, Record<string, unknown>][] }, { text: "Send a photo." },
+      { text: "Location please." },
+      { tools: [["verify_claim", {}]] as [string, Record<string, unknown>][] }, { text: "" }, { text: retry },
+    ];
+    for (const [retry, expected] of [["Umethibitishwa! +100 ECOIN", "Umethibitishwa! +100 ECOIN"], ["", "✅ Verified! 100 ECOIN added to your wallet."]]) {
+      const { deps } = setup({ sam: { sapling: 1 }, observation: YES_TREE, agent: turns(retry) });
+      const from = `2547000009${retry ? "1" : "2"}`;
+      await handle(deps, msg({ from, text: "yes" }));
+      await handle(deps, msg({ from, text: "nimepanda mti" }));
+      await handle(deps, msg({ from, kind: "image", image: { bytes: png(retry ? 11 : 12), mime: "image/png" } }));
+      const [reply] = await handle(deps, msg({ from, kind: "location", location: { lat: -1.29, lng: 36.82 } }));
+      expect(reply).toStartWith(expected);
+    }
+  });
+
   test("a photo sent before saying what it is gets attached when the action starts", async () => {
     const { deps, store } = setup({ sam: { sapling: 1 }, observation: YES_TREE, agent: [
       { text: "What does the photo show?" },
