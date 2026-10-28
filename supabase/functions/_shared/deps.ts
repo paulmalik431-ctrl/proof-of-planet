@@ -3,6 +3,7 @@ import type { AgentDeps } from "../_core/agent.ts";
 import { clientFromEnv } from "../_core/meta.ts";
 import { sendText, type WaConfig } from "../_core/whatsapp.ts";
 import { SupabaseStore } from "./supabase-store.ts";
+import { decodeImage } from "./decode.ts";
 
 export function env(name: string, fallback?: string): string {
   const v = Deno.env.get(name) ?? fallback;
@@ -27,6 +28,7 @@ export function makeDeps(limits: AgentDeps["limits"]): AgentDeps & { store: Supa
   return {
     store,
     meta,
+    decodeImage,
     publicUrl: env("PUBLIC_URL", "https://paulmalik431-ctrl.github.io/proof-of-planet"),
     limits,
     isSandbox,
