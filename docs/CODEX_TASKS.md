@@ -3,14 +3,17 @@
 Deadline: submit by **Nov 4, 6 PM Nairobi** (hard deadline Nov 5, 5 AM Nairobi). Code freeze **Nov 3**.
 Read `AGENTS.md` first. Each task is self-contained, offline-testable and has acceptance criteria.
 
+**Cut-line (agreed with the strategy review):** no Proof Card, follow-ups or bidding expansion until a real-model claim survives intake, partial settlement and duplicate replay end to end.
+
 | ID | Owner | Task | Priority |
 |---|---|---|---|
-| C1 | Codex | Near-duplicate photo detection (perceptual hash) | P0 |
-| C2 | Codex | Proof Card (Muse Image art + verified figures) | P1 |
-| C3 | Codex | Daily ledger fingerprint published to the repo | P1 |
-| C4 | Codex | Cheat lab page (sandbox, fixed cases) | P2 |
-| C5 | Codex | Scheduled follow-ups (tree survival, idle trades) | P2 |
-| C6 | Codex | Waste-lot evaluation protocol + runner | P1 |
+| C6 | Codex | Waste-lot evaluation protocol + runner (protocol committed first) | 1st |
+| C1 | Codex | Near-duplicate photo detection (perceptual hash) | 2nd |
+| C4 | Codex | Cheat lab page (sandbox, fixed cases, reuses C6) | 3rd |
+| C3 | Codex | Daily ledger fingerprint published to the repo | 4th |
+| C5 | Codex | Scheduled follow-ups (only nudges toward intake) | 5th |
+| C2 | Codex | Proof Card (Muse Image art + verified figures) | last |
+| K0 | Claude | Escrow invariant tests: repeated intake, wrong buyer, retries, partial acceptance | P0 |
 | K1 | Claude | Deploy; prove Muse Spark Open tool calls + SAM 3.1 live | P0 |
 | K2 | Claude | Agent bidding round across matched buyers | P1 |
 | K3 | Claude | Receipt step trace (agent steps, model IDs, latency) | P0 |

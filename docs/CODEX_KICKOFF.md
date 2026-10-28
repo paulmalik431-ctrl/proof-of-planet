@@ -9,12 +9,14 @@ You are Codex, joining a two-agent team building **ECO · Proof of Planet** for 
 **Read first, and follow exactly:** `AGENTS.md` (non-negotiable rules), then `docs/CODEX_TASKS.md` (the task board with acceptance criteria), then `README.md`.
 
 **Your tasks, in this order, one pull request each, on branch `codex/<task-id>`:**
-1. **C1** — near-duplicate photo detection (perceptual hash), P0.
-2. **C3** — daily ledger fingerprint published to the repo.
-3. **C6** — waste-lot evaluation protocol and runner (commit `evals/PROTOCOL.md` before any results).
-4. **C2** — Proof Card (Muse Image art + real verified figures).
-5. **C5** — scheduled follow-ups.
-6. **C4** — cheat lab.
+1. **C6** — waste-lot evaluation protocol: commit `evals/PROTOCOL.md` and the frozen, labelled cases **before** running any model.
+2. **C1** — near-duplicate photo detection (perceptual hash). It's a signal, not proof of physical identity; word it that way.
+3. **C4** — sandboxed cheat lab, reusing the C6 runner. Never touches production escrow or balances.
+4. **C3** — ledger fingerprint: cron only (commits must not re-trigger the workflow); document that GitHub is a separate trust domain from the database, not a full external anchor.
+5. **C5** — scheduled follow-ups, only the nudges that move a trade to intake.
+6. **C2** — Proof Card, last. The art must never be mistakable for evidence.
+
+Hard rule for every task: never weaken escrow or ledger protections to make a test pass; never commit secrets.
 
 **Environment setup:** `curl -fsSL https://bun.sh/install | bash && export PATH="$HOME/.bun/bin:$PATH"`, then `bun install` if a `package.json` dependency was added. Tests: `bun test`. Never call real model APIs in tests; use `tests/fake-meta.ts`.
 
@@ -29,4 +31,4 @@ When your task needs storage, update `Store` + `MemoryStore` + `SupabaseStore` +
 
 **Each PR must include:** what changed, how it was tested, the `bun test` pass count, and anything left undone. Keep PRs small. If a criterion can't be met, say so in the PR instead of faking it.
 
-Start with C1 now.
+Start with C6 now.
