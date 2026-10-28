@@ -39,6 +39,8 @@ export const CONSENT_TEXT = [
   "",
   "Meta AI checks your photos. Your photos and the place you share become a public *Evidence File* so anyone can check the work. Your phone number is never shown.",
   "",
+  "This test version runs on Meta's free developer credits, so Meta may use what you send here to improve its products.",
+  "",
   "Reply *YES* to agree. Write in any language.",
 ].join("\n");
 

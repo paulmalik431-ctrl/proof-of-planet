@@ -73,7 +73,7 @@ The tests show that a model calling tools out of order gets nothing (`tests/agen
 | **Muse Image** | Ghost Audit: generates fraudulent evidence to attack our own checks | `scripts/ghost-audit.ts` |
 | **Muse Voice Transcribe** | Voice-note claims (WAV path ready; WhatsApp's Opus notes are on the roadmap) | `_core/meta.ts` |
 
-Only Standard-mode models are used; `-contributor` models are refused in code.
+Only Standard-mode models are used; `-contributor` models are refused in code. **Disclosure:** This hackathon build runs on Meta's free developer credits; under those terms Meta may use what is sent to its models to improve its products. People are told this in the consent message before anything is checked.
 
 ## Architecture
 
