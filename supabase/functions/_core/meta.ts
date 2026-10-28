@@ -109,7 +109,8 @@ export class MetaClient {
     if (opts.tools?.length) body.tools = opts.tools;
     if (opts.responseFormat) body.response_format = opts.responseFormat;
     // Reasoning models spend tokens thinking first; leave room for the answer.
-    if (opts.maxTokens) body.max_tokens = via.model === MODELS.sparkOpen ? Math.max(opts.maxTokens, 4000) : opts.maxTokens;
+    // Muse Spark 1.3 and Spark Open both reason first (live: 598 of 600 tokens went to reasoning, content empty).
+    if (opts.maxTokens) body.max_tokens = Math.max(opts.maxTokens, 4000);
     const res = await this.post("/chat/completions", model, JSON.stringify(body), { "Content-Type": "application/json" }, via);
     const j = await res.json();
     const choice = j?.choices?.[0];
