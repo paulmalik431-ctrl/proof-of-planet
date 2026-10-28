@@ -58,7 +58,7 @@ export function countObjects(frames: SamFrame[], minConfidence = 0.5): number {
   return f.boxes.filter((b) => b.c === null || b.c >= minConfidence).length;
 }
 
-/** Collect text from a Responses API server-sent-event stream (response.output_text.delta events). */
+/** Collect the SAM output_text lane from Responses API SSE deltas and final content-part events. */
 export function collectSseText(body: string): string {
   let text = "";
   let completed: string | null = null;
@@ -70,6 +70,7 @@ export function collectSseText(body: string): string {
       const ev = JSON.parse(payload);
       if (ev.type === "response.output_text.delta" && typeof ev.delta === "string") text += ev.delta;
       if (ev.type === "response.output_text.done" && typeof ev.text === "string") completed = ev.text;
+      if (ev.type === "response.content_part.done" && ev.part?.type === "output_text" && typeof ev.part.text === "string") completed = ev.part.text;
     } catch {
       /* ignore keep-alives and partial lines */
     }
