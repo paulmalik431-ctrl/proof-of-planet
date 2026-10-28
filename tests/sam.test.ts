@@ -40,3 +40,22 @@ describe("SAM 3.1 output parser", () => {
     expect(collectSseText(sse)).toBe("<0f>0<|box;x1=1;y1=1;x2=2;y2=2;w=9;h=9|>");
   });
 });
+
+test("collects SAM text from Meta's finalized content_part.done event", () => {
+  const samText = "<0f>0<|box;x1=10;y1=20;x2=14;y2=24;w=100;h=80;c=0.91|><|mask;x=0;y=0;data=2,2,!abcd|>";
+  const body = [
+    "event: response.created",
+    'data: {"type":"response.created","response":{"id":"resp_live_shape"}}',
+    "",
+    "event: response.content_part.done",
+    `data: ${JSON.stringify({ type: "response.content_part.done", item_id: "msg_0", output_index: 0, content_index: 0, part: { type: "output_text", text: samText } })}`,
+    "",
+    "event: response.completed",
+    'data: {"type":"response.completed","response":{"status":"completed","output":[]}}',
+    "",
+    "data: [DONE]",
+  ].join("\n");
+  const text = collectSseText(body);
+  expect(text).toBe(samText);
+  expect(countObjects(parseSamOutput(text))).toBe(1);
+});
