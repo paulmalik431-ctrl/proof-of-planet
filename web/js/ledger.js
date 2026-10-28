@@ -17,7 +17,7 @@ async function sha256Hex(data) {
 async function seal(e) {
   return { ...e, hash: await sha256Hex(canonical(e)) };
 }
-function checkLegs(legs, balanceOf) {
+function checkLegs(legs, balanceOf, ref = null, escrowHeld = () => 0) {
   if (!legs.length)
     return "no legs";
   for (const l of legs)
@@ -39,6 +39,16 @@ function checkLegs(legs, balanceOf) {
   for (const [a, n] of net)
     if (n < 0 && balanceOf(a) + n < 0)
       return `insufficient ECOIN in ${a}`;
+  const e = net.get(SYSTEM.escrow);
+  if (e !== undefined) {
+    if (!ref)
+      return "escrow moves need a trade reference";
+    const held = escrowHeld(ref);
+    if (e > 0 && held > 0)
+      return "this trade is already in escrow";
+    if (e < 0 && held + e < 0)
+      return "escrow for this trade is already settled";
+  }
   return null;
 }
 async function verifyChain(entries) {

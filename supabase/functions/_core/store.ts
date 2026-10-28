@@ -200,8 +200,15 @@ export class MemoryStore implements Store {
   }
 
   private bal(a: string) { return this.ledger.filter((e) => e.account_id === a).reduce((s, e) => s + e.amount, 0); }
-  async post(legs: Leg[], ref: string | null, memo: string) {
-    const err = checkLegs(legs, (a) => this.bal(a));
+  private posting: Promise<unknown> = Promise.resolve();
+  /** Serialised like the SQL version (which locks the ledger table), so concurrent posts can't interleave. */
+  post(legs: Leg[], ref: string | null, memo: string): Promise<LedgerEntry[]> {
+    const run = this.posting.then(() => this.postNow(legs, ref, memo));
+    this.posting = run.catch(() => {});
+    return run;
+  }
+  private async postNow(legs: Leg[], ref: string | null, memo: string) {
+    const err = checkLegs(legs, (a) => this.bal(a), ref, (r) => this.ledger.filter((e) => e.account_id === SYSTEM.escrow && e.ref === r).reduce((s, e) => s + e.amount, 0));
     if (err) throw new Error(err);
     const at = this.ts();
     const out: LedgerEntry[] = [];

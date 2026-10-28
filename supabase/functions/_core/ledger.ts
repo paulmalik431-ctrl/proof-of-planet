@@ -54,7 +54,12 @@ export async function seal(e: UnsignedEntry): Promise<LedgerEntry> {
 }
 
 /** The posting rules shared by every store. Returns an error message, or null if the legs are valid. */
-export function checkLegs(legs: Leg[], balanceOf: (account: string) => number): string | null {
+/**
+ * Escrow is one pooled account, so it is also tracked per trade: escrow moves need the trade id as ref,
+ * a trade is locked at most once, and a payout can never exceed what that trade locked. This is what stops
+ * a repeated or concurrent intake from paying twice out of another trade's collateral.
+ */
+export function checkLegs(legs: Leg[], balanceOf: (account: string) => number, ref: string | null = null, escrowHeld: (ref: string) => number = () => 0): string | null {
   if (!legs.length) return "no legs";
   for (const l of legs) if (!Number.isInteger(l.amount) || l.amount === 0) return "amounts must be non-zero whole ECOIN";
   const mint = legs.every((l) => MINT_KINDS.includes(l.kind));
@@ -67,6 +72,13 @@ export function checkLegs(legs: Leg[], balanceOf: (account: string) => number): 
   const net = new Map<string, number>();
   for (const l of legs) net.set(l.account_id, (net.get(l.account_id) ?? 0) + l.amount);
   for (const [a, n] of net) if (n < 0 && balanceOf(a) + n < 0) return `insufficient ECOIN in ${a}`;
+  const e = net.get(SYSTEM.escrow);
+  if (e !== undefined) {
+    if (!ref) return "escrow moves need a trade reference";
+    const held = escrowHeld(ref);
+    if (e > 0 && held > 0) return "this trade is already in escrow";
+    if (e < 0 && held + e < 0) return "escrow for this trade is already settled";
+  }
   return null;
 }
 

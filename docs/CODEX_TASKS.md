@@ -13,7 +13,7 @@ Read `AGENTS.md` first. Each task is self-contained, offline-testable and has ac
 | C3 | Codex | Daily ledger fingerprint published to the repo | 4th |
 | C5 | Codex | Scheduled follow-ups (only nudges toward intake) | 5th |
 | C2 | Codex | Proof Card (Muse Image art + verified figures) | last |
-| K0 | Claude | Escrow invariant tests: repeated intake, wrong buyer, retries, partial acceptance | P0 |
+| K0 | Claude | Escrow invariant tests: repeated intake, wrong buyer, retries, partial acceptance | ✅ done |
 | K1 | Claude | Deploy; prove Muse Spark Open tool calls + SAM 3.1 live | P0 |
 | K2 | Claude | Agent bidding round across matched buyers | P1 |
 | K3 | Claude | Receipt step trace (agent steps, model IDs, latency) | P0 |

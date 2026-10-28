@@ -196,6 +196,8 @@ declare
   v_all_mint boolean;
   v_any_mint boolean;
   v_sum numeric;
+  v_escrow numeric;
+  v_held numeric;
 begin
   if p_legs is null or jsonb_array_length(p_legs) = 0 then raise exception 'no legs'; end if;
   lock table public.ledger in exclusive mode;
@@ -215,6 +217,15 @@ begin
     select 1 from (select l->>'account_id' as a, sum((l->>'amount')::numeric) as n from jsonb_array_elements(p_legs) l group by 1) x
     where x.n < 0 and coalesce((select sum(amount) from public.ledger where account_id = x.a), 0) + x.n < 0
   ) then raise exception 'insufficient ECOIN'; end if;
+  -- Escrow is pooled, so it is also checked per trade (same rule as checkLegs): moves need the trade ref,
+  -- a trade is locked at most once, and a payout never exceeds what that trade locked.
+  select sum((l->>'amount')::numeric) into v_escrow from jsonb_array_elements(p_legs) l where l->>'account_id' = 'eco_escrow';
+  if v_escrow is not null then
+    if p_ref is null then raise exception 'escrow moves need a trade reference'; end if;
+    select coalesce(sum(amount), 0) into v_held from public.ledger where account_id = 'eco_escrow' and ref = p_ref;
+    if v_escrow > 0 and v_held > 0 then raise exception 'this trade is already in escrow'; end if;
+    if v_escrow < 0 and v_held + v_escrow < 0 then raise exception 'escrow for this trade is already settled'; end if;
+  end if;
 
   v_at := to_char(clock_timestamp() at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"');
   select * into last from public.ledger order by seq desc limit 1;

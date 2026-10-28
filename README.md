@@ -45,6 +45,7 @@ The ledger enforces the same rules twice, once in TypeScript (`checkLegs`) and o
 - minting can only credit;
 - every transfer sums to zero;
 - no account can go below zero;
+- escrow is tracked per trade: a trade locks once and can never pay out more than it locked, so a repeated or simultaneous confirmation can't pay twice;
 - every entry is hash-chained to the one before it and can't be updated or deleted.
 
 The tests show that a model calling tools out of order gets nothing (`tests/agent.test.ts`, `tests/loop-glance.test.ts`).
@@ -113,7 +114,7 @@ flowchart LR
 ## Run it
 
 ```bash
-bun test                                   # 40 tests: SAM parser, rules, ledger & fees, Loop, Glance, agent, WhatsApp. Offline, no API cost.
+bun test                                   # 55 tests: SAM parser, rules, ledger & fees, escrow invariants, Loop, Glance, agent, WhatsApp. Offline, no API cost.
 MODEL_API_KEY=... bun run dev              # local site + live agent at http://localhost:8787
 bun scripts/dev.ts --seed a.jpg b.jpg      # offline: a scripted earn → trade → spend story to explore the pages
 MODEL_API_KEY=... bun run audit            # Ghost Audit (Muse Image fakes vs. Witness)

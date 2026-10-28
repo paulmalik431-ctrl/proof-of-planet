@@ -321,7 +321,10 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
       if (!t || t.buyer !== account.id) return { error: "Offer not found." };
       if (t.status !== "proposed") return { error: `This trade is ${t.status}.` };
       try { await store.post(escrowLock(account.id, t.total), t.id, `Loop escrow #${short(t.id)}`); }
-      catch { return { error: `Not enough ECOIN: ${t.total} needed, balance ${await store.balance(account.id)}.` }; }
+      catch (e) {
+        if (String(e).includes("already in escrow")) return { error: "This trade is already paid into escrow." };
+        return { error: `Not enough ECOIN: ${t.total} needed, balance ${await store.balance(account.id)}.` };
+      }
       const intakeCode = newCode();
       await store.updateTrade(t.id, { status: "escrowed", intake_code_hash: await hashCode(t.id, intakeCode), history: hist(t, "escrowed", `${t.total} ECOIN locked in escrow`, now) });
       await store.updateListing(t.listing_id, { status: "reserved" });
@@ -461,8 +464,11 @@ async function closeTrade(store: Store, t: Trade, status: Trade["status"], note:
  * (fees + Reserve), returns any difference to the buyer, and records who weighed what. Shared by the WhatsApp
  * tool and the web intake page. A zero intake is not a refund: it must go through a dispute and a human reviewer.
  */
-export async function settleIntake(deps: Deps, t: Trade, intake: Intake, now: Date): Promise<Record<string, unknown>> {
+export async function settleIntake(deps: Deps, stale: Trade, intake: Intake, now: Date): Promise<Record<string, unknown>> {
   const { store } = deps;
+  const t = await store.trade(stale.id); // never settle from a copy read before another intake landed
+  if (!t) return { error: "Trade not found." };
+  if (intake.by !== t.buyer) return { error: "Only the buyer can record the intake." };
   if (!["delivered", "escrowed"].includes(t.status)) return { error: `This trade is ${t.status}.` };
   const q = Number(intake.accepted_quantity);
   const unit = t.unit === "items" ? "items" : t.unit;
@@ -470,9 +476,14 @@ export async function settleIntake(deps: Deps, t: Trade, intake: Intake, now: Da
   if (q > t.quantity) return { error: `Accepted quantity can't exceed the ${t.quantity} ${unit} paid into escrow. Record the extra as a new trade.` };
   const accepted = t.unit === "items" ? Math.floor(q) : Math.round(q * 10) / 10;
   const toSeller = Math.min(t.total, Math.round(accepted * t.price));
+  if (toSeller < 1) return { error: "That accepted quantity is worth less than 1 ECOIN. If nothing usable arrived, open a dispute instead." };
   const fullRelease = toSeller === t.total;
   const { legs, split } = fullRelease ? escrowRelease(t.seller, t.total) : escrowSplit(t.seller, t.buyer, t.total, toSeller);
-  await store.post(legs, t.id, `Loop trade #${short(t.id)}`);
+  try { await store.post(legs, t.id, `Loop trade #${short(t.id)}`); }
+  catch (e) {
+    deps.log?.("intake_refused", { trade: t.id, error: String(e) });
+    return { error: "This trade's escrow was already settled, so nothing more was paid." };
+  }
   await store.updateTrade(t.id, { intake: { ...intake, accepted_quantity: accepted } });
   const refunded = t.total - toSeller;
   await closeTrade(store, t, "released", `Buyer weighed and accepted ${accepted} ${unit}${intake.grade ? ` (grade ${intake.grade})` : ""} via ${intake.via}. Seller paid ${split.net}; fees ${split.fee} (reserve ${split.reserve})${refunded ? `; ${refunded} returned to buyer` : ""}.`, now);
