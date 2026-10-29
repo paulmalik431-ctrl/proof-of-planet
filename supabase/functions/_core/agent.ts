@@ -93,7 +93,7 @@ function welcome(deps: AgentDeps, a: Account): string {
     `Welcome to ECO 🌱 Your wallet: *${a.id}*`,
     "",
     "*Earn* — plant a tree, clean up a place or recycle; send photos and Meta AI verifies them.",
-    "*Trade* — sell waste to businesses that turn it into value on *Loop* (rice husk → briquettes, coffee pulp → compost, bottles → recyclers), paid through escrow.",
+    "*Trade* — sell waste to businesses that turn it into value on *Loop* (rice husk → briquettes, jerrycans → reuse or recycling, bottles → recyclers), paid through escrow.",
     "*Spend* — pay in shops with *Glance*: just your phone number and a WhatsApp code.",
     "",
     `What did you do for the climate today? How it works: ${deps.publicUrl}`,

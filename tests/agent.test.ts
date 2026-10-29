@@ -19,7 +19,9 @@ describe("WhatsApp agent", () => {
   test("asks for consent first, without calling any model", async () => {
     const { deps, log } = setup({ sam: {}, observation: {}, agent: [] });
     expect(await handle(deps, msg({ text: "hi" }))).toEqual([CONSENT_TEXT]);
-    expect((await handle(deps, msg({ text: "Ndio" })))[0]).toContain("Welcome to ECO");
+    const welcome = (await handle(deps, msg({ text: "Ndio" })))[0];
+    expect(welcome).toContain("Welcome to ECO");
+    expect(welcome).toContain("jerrycans → reuse or recycling");
     expect(log).toHaveLength(0);
   });
 
