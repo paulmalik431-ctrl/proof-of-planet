@@ -11,7 +11,7 @@ import { countObjects, parseSamOutput } from "./sam.ts";
 
 export type MaterialId =
   | "rice_husk" | "sawdust" | "maize_cobs" | "coffee_pulp" | "used_cooking_oil" | "food_waste"
-  | "pet_bottles" | "cans" | "cardboard" | "e_waste";
+  | "pet_bottles" | "plastic_jerrycans" | "cans" | "cardboard" | "e_waste";
 export type Grade = "A" | "B" | "C";
 export type Unit = "kg" | "items" | "litres";
 
@@ -34,6 +34,7 @@ export const MATERIALS: Record<MaterialId, Material> = {
   used_cooking_oil: { id: "used_cooking_oil", title: "Used cooking oil", unit: "litres", sam: "plastic container", counts: "containers", becomes: ["biodiesel", "soap"], buyers: ["biodiesel makers", "soap makers"], quality: "strained, no water, no mixed fuels" },
   food_waste: { id: "food_waste", title: "Food and market waste", unit: "kg", sam: "sack", counts: "sacks", becomes: ["insect protein (black soldier fly)", "compost"], buyers: ["insect farms", "composters"], quality: "organic only, no plastic or glass" },
   pet_bottles: { id: "pet_bottles", title: "PET plastic bottles", unit: "items", sam: "plastic bottle", counts: "items", becomes: ["recycled PET flakes"], buyers: ["plastic recyclers"], quality: "sorted PET only, caps off, rinsed" },
+  plastic_jerrycans: { id: "plastic_jerrycans", title: "Plastic jerrycans", unit: "items", sam: "plastic jerrycan", counts: "items", becomes: ["reusable storage containers", "reprocessed plastic"], buyers: ["container reusers", "plastic recyclers"], quality: "empty and clean; disclose the resin type when known; intact if sold for reuse" },
   cans: { id: "cans", title: "Aluminium cans", unit: "items", sam: "drink can", counts: "items", becomes: ["recycled aluminium"], buyers: ["scrap metal recyclers"], quality: "aluminium only, empty" },
   cardboard: { id: "cardboard", title: "Cardboard", unit: "kg", sam: "cardboard box", counts: "items", becomes: ["recycled paper"], buyers: ["paper recyclers"], quality: "dry, flattened, no wax coating" },
   e_waste: { id: "e_waste", title: "E-waste (phones, chargers, small electronics)", unit: "items", sam: "electronic device", counts: "items", becomes: ["recovered metals and parts"], buyers: ["licensed e-waste recyclers"], quality: "intact, batteries handled safely" },

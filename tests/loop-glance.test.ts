@@ -236,6 +236,14 @@ describe("Loop rules", () => {
     expect(sameCode("Code: K 7 P 2", "K7P2")).toBe(true);
     expect(sameCode("K7P3", "K7P2")).toBe(false);
   });
+  test("recyclable jerrycans are a separate countable category from PET bottles", () => {
+    const jerrycans = MATERIALS.plastic_jerrycans;
+    expect(jerrycans).toMatchObject({ unit: "items", sam: "plastic jerrycan", counts: "items" });
+    expect(gradeLot(jerrycans, 8, 8, obs({ identified_as: "plastic_jerrycans", estimated_quantity: 8 }), "K7P2"))
+      .toMatchObject({ outcome: "listed", grade: "A", verified_quantity: 8 });
+    expect(gradeLot(jerrycans, 8, 8, obs({ identified_as: "pet_bottles", matches_claim: "no" }), "K7P2").outcome)
+      .toBe("rejected");
+  });
   test("best bid wins; grade floor, radius and self-dealing are enforced; price = the bid", () => {
     const l = { id: "l", seller: "s", material: "rice_husk", quantity: 500, price: 3, grade: "B", lat: 0, lng: 0 } as never;
     const d = (id: string, buyer: string, max_price: number, lng: number, min_grade = "C", radius_km = 25) => ({ id, buyer, material: "rice_husk", quantity: 300, max_price, min_grade, lat: 0, lng, radius_km, status: "open" }) as never;
