@@ -9,7 +9,7 @@
 ## Live checks
 - Homepage is live with the custom SVG system diagram and was inspected at desktop and 390px mobile widths. No generated imagery is used.
 - WhatsApp webhook now rejects an empty verification token (GET returns 403). An unconfigured POST returns 503. These checks confirm fail-closed behavior; they do not prove a WhatsApp conversation works.
-- Meta for Developers sign-in entry page is open in the in-app browser with “Continue with Facebook”. The founder must complete authentication and app setup; no profile or app was selected.
+- Meta for Developers sign-in URL is available, but no Meta page is currently open in the browser. The founder must sign in and complete app setup; no profile or app has been selected.
 - Seller simulator session `JrLoopOct29A1` accepted the description of empty plastic jerrycans and asked for the actual item count. Poll confirms the session exists with no new message. No quantity was guessed, no listing draft was created, and no ECOIN moved.
 - Buyer simulator session `LoopBuyerOct29B1` registered as “Simulator Recycler”; `top_up_test_ecoin` issued the fixed 5,000 demo-only ECOIN deposit. A wallet read confirmed the balance and “test deposit (demo only)” entry. No bid was submitted because there is no seller listing or buyer-set price yet.
 - A new post-PR #8 live simulator consent check returned the updated welcome text mentioning jerrycan reuse/recycling; no model call or ECOIN movement was needed.
