@@ -11,6 +11,19 @@ export interface WaConfig {
 
 const graph = (c: WaConfig) => `https://graph.facebook.com/${c.version ?? "v23.0"}`;
 
+function sameSecret(a: string, b: string): boolean {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+/** Meta's GET handshake. An absent configured secret must never accept an empty query value. */
+export function webhookChallenge(mode: string | null, token: string | null, challenge: string | null, expected: string): string | null {
+  if (mode !== "subscribe" || !challenge || !sameSecret(token ?? "", expected)) return null;
+  return challenge;
+}
+
 /** Raw inbound message reference (media not yet downloaded). */
 export interface WaMessage {
   id: string;
@@ -45,18 +58,15 @@ export function parseWebhook(payload: any): WaMessage[] {
 }
 
 export async function verifySignature(appSecret: string, rawBody: string, header: string | null): Promise<boolean> {
-  if (!header?.startsWith("sha256=")) return false;
+  if (!appSecret || !header?.startsWith("sha256=")) return false;
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(appSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody)));
   const hex = [...sig].map((b) => b.toString(16).padStart(2, "0")).join("");
-  const given = header.slice(7);
-  if (given.length !== hex.length) return false;
-  let diff = 0;
-  for (let i = 0; i < hex.length; i++) diff |= hex.charCodeAt(i) ^ given.charCodeAt(i);
-  return diff === 0;
+  return sameSecret(header.slice(7), hex);
 }
 
 export async function downloadMedia(c: WaConfig, mediaId: string): Promise<{ bytes: Uint8Array; mime: string }> {
+  if (!c.token || !mediaId) throw new Error("WhatsApp media is not configured");
   const f = c.fetch ?? fetch;
   const meta = await f(`${graph(c)}/${mediaId}`, { headers: { Authorization: `Bearer ${c.token}` } });
   if (!meta.ok) throw new Error(`media lookup failed (${meta.status})`);
@@ -76,13 +86,15 @@ export async function toInbound(c: WaConfig, m: WaMessage): Promise<Inbound> {
 }
 
 export async function sendText(c: WaConfig, to: string, body: string): Promise<void> {
+  if (!c.token || !c.phoneNumberId) throw new Error("WhatsApp messaging is not configured");
+  if (!/^\d{7,15}$/.test(to)) throw new Error("WhatsApp recipient must be an international phone number in digits-only format");
   const f = c.fetch ?? fetch;
   const res = await f(`${graph(c)}/${c.phoneNumberId}/messages`, {
     method: "POST",
     headers: { Authorization: `Bearer ${c.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body: body.slice(0, 4096), preview_url: true } }),
   });
-  if (!res.ok) throw new Error(`send failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok) throw new Error(`WhatsApp send failed (${res.status})`);
 }
 
 /** Blue ticks, so the person knows ECO is working on it. */

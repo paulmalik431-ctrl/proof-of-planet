@@ -1,133 +1,95 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ECO · Proof of Planet</title>
-<meta name="description" content="ECO makes climate action attractive and tradeable. Earn ECOIN for verified climate action, trade recyclables through escrow, spend in shops — on WhatsApp, checked by Meta AI.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ECO — Proof of Planet</title>
+<meta name="description" content="ECO turns verified climate action and recyclable materials into a transparent local economy. AI assesses. Rules decide. Anyone can audit.">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="home.css">
 </head>
-<body>
+<body class="home">
 <div id="nav"></div>
 <main>
-  <section class="hero"><div class="wrap hero-grid">
-    <div class="hero-copy">
-      <p class="label"><span class="live-dot"></span> Climate action, with a way to pay</p>
-      <h1>Make climate<br><em>action count.</em></h1>
-      <p class="lede"><b>ECOIN is issued for verified climate action.</b> People can trade recyclable materials with local businesses and spend at participating shops. WhatsApp makes the service accessible; fixed rules control the money.</p>
-      <div class="hero-actions">
-        <a class="btn" href="try.html">Explore the live demo <span aria-hidden="true">↗</span></a>
-        <a class="btn ghost" href="atlas.html">View the Atlas</a>
-        <a class="btn wa" id="wa" href="#" hidden>Message ECO on WhatsApp</a>
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="label"><span class="live-dot"></span> Proof of Planet <span class="hero-index">/ 001</span></p>
+        <h1>Climate action,<br><em>accounted for.</em></h1>
+        <p class="lede">A new kind of climate economy. Verified action earns ECOIN. Recyclable materials meet local buyers. Every payment follows rules people can inspect.</p>
+        <div class="hero-actions">
+          <a class="btn" href="try.html">Enter the live demo <span aria-hidden="true">↗</span></a>
+          <a class="btn ghost" href="ledger.html">Inspect the ledger</a>
+          <a class="btn wa" id="wa" href="#" hidden>Talk to ECO on WhatsApp <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="hero-caption"><span>01</span><p>Built in Kenya.<br>Designed for anywhere.</p></div>
       </div>
-      <p class="hero-note"><span class="note-mark">01</span> Human scale access. Auditable rules.</p>
-    </div>
-    <aside class="proof-board" aria-label="ECO process: verify evidence, trade materials, spend ECOIN">
-      <div class="board-head"><span>THE ECO EXCHANGE</span><span class="board-mark"><i></i> HOW IT WORKS</span></div>
-      <div class="board-flow">
-        <div class="board-step"><span class="board-num">01</span><span class="board-glyph glyph-proof">✓</span><div><b>Prove the action</b><small>Photo · location · fixed checks</small></div><span class="step-arrow">↘</span></div>
-        <div class="board-step"><span class="board-num">02</span><span class="board-glyph glyph-loop">↔</span><div><b>Trade materials</b><small>Buyer bids · ECOIN in escrow</small></div><span class="step-arrow">↘</span></div>
-        <div class="board-step"><span class="board-num">03</span><span class="board-glyph glyph-pay">＋</span><div><b>Keep value moving</b><small>Spend with a code at local shops</small></div><span class="step-arrow final-arrow">↗</span></div>
+      <div class="system-map" aria-label="ECO system map: verified evidence flows to a local trade and an auditable payment">
+        <div class="map-top"><span>FLOW MODEL / 001</span><span class="map-live"><i></i> RULE-BASED SETTLEMENT</span></div>
+        <svg class="orbit-map" viewBox="0 0 620 500" role="img" aria-labelledby="map-title map-desc">
+          <title id="map-title">Proof to payment</title><desc id="map-desc">A hand-built system diagram connecting evidence, material exchange and the ECOIN ledger.</desc>
+          <defs><pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity=".08" stroke-width="1"/></pattern></defs>
+          <rect width="620" height="500" fill="url(#grid)"/>
+          <circle cx="310" cy="248" r="146" fill="none" stroke="#ffffff" stroke-opacity=".12"/>
+          <circle cx="310" cy="248" r="103" fill="none" stroke="#c9f46a" stroke-opacity=".42" stroke-dasharray="2 8"/>
+          <path d="M310 102 A146 146 0 0 1 452 280" fill="none" stroke="#c9f46a" stroke-width="2"/>
+          <path d="M452 280 A146 146 0 0 1 181 326" fill="none" stroke="#d1d5cf" stroke-opacity=".65" stroke-width="1.5"/>
+          <path d="M181 326 A146 146 0 0 1 310 102" fill="none" stroke="#d1d5cf" stroke-opacity=".65" stroke-width="1.5"/>
+          <circle cx="310" cy="102" r="5" fill="#c9f46a"/><circle cx="452" cy="280" r="5" fill="#c9f46a"/><circle cx="181" cy="326" r="5" fill="#c9f46a"/>
+          <circle cx="310" cy="248" r="61" fill="#111512" stroke="#c9f46a" stroke-opacity=".7"/>
+          <text x="310" y="238" text-anchor="middle" class="diagram-over">ECOIN</text><text x="310" y="263" text-anchor="middle" class="diagram-core">RULES</text><text x="310" y="281" text-anchor="middle" class="diagram-under">CONTROL VALUE</text>
+          <text x="310" y="55" text-anchor="middle" class="diagram-label">01 / WITNESS</text><text x="310" y="73" text-anchor="middle" class="diagram-note">PHOTO · LOCATION · CHECKS</text>
+          <text x="510" y="279" text-anchor="start" class="diagram-label">02 / LOOP</text><text x="510" y="297" text-anchor="start" class="diagram-note">BUYER BID · ESCROW</text>
+          <text x="115" y="353" text-anchor="end" class="diagram-label">03 / VAULT</text><text x="115" y="371" text-anchor="end" class="diagram-note">INTAKE · RELEASE</text>
+          <path d="M310 107V154M447 278H407M185 326L224 304" stroke="#c9f46a" stroke-opacity=".5" stroke-dasharray="3 5"/>
+          <text x="20" y="475" class="diagram-note">AI ASSESSES. RULES DECIDE. ANYONE CAN AUDIT.</text><text x="600" y="475" text-anchor="end" class="diagram-note">ECO / KENYA</text>
+        </svg>
+        <div class="map-bottom"><span>ONE LEDGER</span><span>THREE VERIFIED MOVEMENTS</span><span>NO MODEL-CONTROLLED MONEY</span></div>
       </div>
-      <div class="board-foot"><span>AI checks the evidence</span><b>Rules move the money.</b></div>
-    </aside>
-  </div></section>
-
-  <section><div class="wrap">
-    <p class="label">The gap</p>
-    <h2>Climate action and payments are broken for most people.</h2>
-    <div class="grid g4" style="margin-top:16px">
-      <div class="card problem"><b>Unverified</b><span class="small">Funders can't trust the evidence, so they check it by hand or don't pay at all.</span></div>
-      <div class="card problem"><b>Unpaid, unbanked</b><span class="small">The people doing the work rarely earn from it, and 1.4 billion adults have no bank account.</span></div>
-      <div class="card problem"><b>Costly, hard to use</b><span class="small">Cards and payment platforms charge high fees and are hard for first-time users.</span></div>
-      <div class="card problem"><b>Untradeable</b><span class="small">Climate waste and verified action have no simple market.</span></div>
     </div>
-    <p style="margin-top:14px"><b>ECO fixes all four.</b> <span class="small muted">Source: World Bank Global Findex 2021.</span></p>
-  </div></section>
+  </section>
 
-  <section><div class="wrap">
-    <p class="label">One system, four jobs</p>
-    <h2>Earn it. Trade it. Spend it. Fund it.</h2>
-    <div class="grid g4" style="margin-top:18px">
-      <div class="card engine"><span class="verb">Earn</span><h3>Witness</h3>
-        <p class="small">Plant a tree, clean up a place or recycle, then send photos on WhatsApp. SAM 3.1 counts what matters, Muse Spark answers fixed questions, and fixed rules decide. <b>No proof, no token.</b></p>
-        <p><span class="model">SAM 3.1</span> <span class="model">Muse Spark</span></p></div>
-      <div class="card engine"><span class="verb">Trade</span><h3>Loop</h3>
-        <p class="small">Sell sorted bottles, cans, cardboard and e-waste to businesses. The lot is checked and graded. Buyers set prices through bids, and the buyer's ECOIN stays in <b>escrow</b> until delivery. If there's a dispute, AI recommends and a person decides.</p>
-        <p><span class="model">SAM 3.1</span> <span class="model">Muse Spark</span></p></div>
-      <div class="card engine"><span class="verb">Spend</span><h3>Glance</h3>
-        <p class="small">Pay in shops, on buses and in apps with no card and no cash. The shop types your number, and you confirm with your face (on the roadmap) or the <b>WhatsApp code</b>. There is no face database.</p>
-        <p><span class="model">WhatsApp</span></p></div>
-      <div class="card engine"><span class="verb">Fund</span><h3>Atlas</h3>
-        <p class="small">Verified data becomes a live map for funders and investors: what to fund, where action is needed, and where the risk is. Every claim links back to its evidence.</p>
-        <p><span class="model">Muse Spark</span></p></div>
-    </div>
-    <p class="small muted" style="margin-top:12px">All four run on one agent: <b>ECO on WhatsApp</b> (Muse Spark 1.3 with tool calling), plus <b>Vault</b>, the escrow and an audited Reserve on a public, hash-chained ledger.</p>
-  </div></section>
+  <div class="rail" aria-label="ECO systems"><div class="wrap rail-inner"><span>WITNESS <i>—</i> VERIFY</span><span>LOOP <i>—</i> TRADE</span><span>GLANCE <i>—</i> SPEND</span><span>ATLAS <i>—</i> SEE</span><span>VAULT <i>—</i> ACCOUNT</span></div></div>
 
-  <section><div class="wrap">
-    <p class="label">Live, from the public ledger</p>
-    <div class="grid g4" id="stats">
-      <div class="card stat"><b>—</b><span>verified climate actions</span></div>
-      <div class="card stat"><b>—</b><span>recyclables traded (units)</span></div>
-      <div class="card stat"><b>—</b><span>ECOIN minted by Proof of Planet</span></div>
-      <div class="card stat"><b>—</b><span>ECOIN in the Reserve</span></div>
-    </div>
-    <p class="small muted" id="stats-note" style="margin-top:10px"></p>
-  </div></section>
-
-  <section><div class="wrap grid g2">
-    <div>
-      <p class="label">Built around one rule</p>
-      <p class="big-quote">The AI can look and talk.<br>Only rules can move money.</p>
-      <p style="margin-top:14px">The agent chooses which tool to use. Each tool enforces its own rules, and ECOIN can only move through four gates:</p>
-    </div>
-    <div>
-      <div class="gate"><span><b>Mint</b>: only after Witness checks find the evidence consistent. The amount comes from the protocol, never from the model.</span></div>
-      <div class="gate"><span><b>Escrow</b>: only when the buyer accepts the offer, and only from their own balance.</span></div>
-      <div class="gate"><span><b>Release</b>: only when the buyer confirms delivery, or a human reviewer decides a dispute.</span></div>
-      <div class="gate"><span><b>Pay</b>: only with the 6-digit code sent to the customer's WhatsApp (stored as a hash, valid for 5 minutes, 3 tries).</span></div>
-      <p class="small muted" style="margin-top:10px">Every entry is hash-chained and append-only, and the database rejects overdrafts. <a href="ledger.html">Check the whole chain yourself →</a></p>
+  <section class="section process" id="how-it-works"><div class="wrap">
+    <div class="section-heading"><p class="label">The operating principle <span>/ 02</span></p><h2>Proof creates value.<br>Rules move it.</h2><p class="section-intro">People do the work. Evidence is checked. ECOIN moves only when the next step is proven.</p></div>
+    <div class="process-grid">
+      <article class="process-step"><span class="step-no">01</span><div class="step-line"></div><p class="label">Witness / earn</p><h3>Show the work.</h3><p>Share a photo and location. SAM 3.1 observes the evidence; fixed protocols determine whether a claim qualifies.</p><a href="try.html">See a claim in the demo <span>↗</span></a></article>
+      <article class="process-step"><span class="step-no">02</span><div class="step-line"></div><p class="label">Loop / trade</p><h3>Let buyers set value.</h3><p>Sorted material goes to a local market. Buyers bid. ECOIN is held in escrow until the buyer records accepted weight.</p><a href="try.html">Explore the trade flow <span>↗</span></a></article>
+      <article class="process-step"><span class="step-no">03</span><div class="step-line"></div><p class="label">Vault / account</p><h3>Make each movement visible.</h3><p>Settlement follows ledger rules. Fees support the Reserve. Anyone can inspect the public chain and its references.</p><a href="ledger.html">Open the public ledger <span>↗</span></a></article>
     </div>
   </div></section>
 
-  <section><div class="wrap grid g2">
-    <div>
-      <p class="label">How value moves</p>
-      <h2>Earned only for verified climate action.</h2>
-      <ul class="small value-list" style="padding-left:18px;display:grid;gap:8px">
-        <li><b>No proof, no token.</b> New ECOIN is minted only by a verified action.</li>
-        <li><b>Spent</b> on trades and everyday payments.</li>
-        <li><b>Escrow:</b> each trade's ECOIN is held as collateral until delivery is confirmed.</li>
-        <li><b>Reserve:</b> 30% of every fee builds an audited ECOIN Reserve, visible on the ledger.</li>
-        <li><b>Intelligence:</b> the evidence behind every ECOIN gives funders a live view of climate activity in Atlas.</li>
-      </ul>
-    </div>
-    <div>
-      <p class="label">A sustainable model</p>
-      <div class="fee"><b>Marketplace fees</b><span>2%</span><p>People sell climate waste to businesses on Loop. ECO takes a fee on every trade.</p></div>
-      <div class="fee"><b>Escrow fees</b><span>1%</span><p>Each trade's ECOIN is held until delivery. AI helps settle disputes; a person decides.</p></div>
-      <div class="fee"><b>Payment fees</b><span>1%</span><p>A fee on everyday Glance payments, paid by the shop.</p></div>
-      <div class="fee"><b>Verification fees</b><span>per project</span><p>Funds and developers pay for Witness checks and Atlas briefs on their projects.</p></div>
-      <div class="fee"><b>App revenue</b><span>today</span><p>Advertising and Boost subscriptions in the ECO App.</p></div>
-      <p style="margin-top:12px"><b>We earn from fees, not from ECOIN's price.</b></p>
+  <section class="section engines"><div class="wrap">
+    <div class="section-heading engine-heading"><p class="label">Five engines. One agent. <span>/ 03</span></p><h2>Purpose-built for<br>the whole exchange.</h2></div>
+    <div class="engine-list">
+      <article class="engine-row"><span class="engine-number">01</span><div class="engine-name"><span>Earn</span><h3>Witness</h3></div><p>Evidence for planting, cleanup and recycling, assessed against fixed protocols. No proof, no token.</p><span class="engine-model">SAM 3.1 <b>·</b> MUSE SPARK</span></article>
+      <article class="engine-row"><span class="engine-number">02</span><div class="engine-name"><span>Trade</span><h3>Loop</h3></div><p>Waste-to-value exchange. Buyer bids set the price; weighed intake sets what is paid.</p><span class="engine-model">MUSE SPARK <b>·</b> ESCROW</span></article>
+      <article class="engine-row"><span class="engine-number">03</span><div class="engine-name"><span>Spend</span><h3>Glance</h3></div><p>Shop payments confirmed with a one-time WhatsApp code. No face database.</p><span class="engine-model">WHATSAPP CODE</span></article>
+      <article class="engine-row"><span class="engine-number">04</span><div class="engine-name"><span>See</span><h3>Atlas</h3></div><p>A live view of public climate activity, with each figure linked back to its source.</p><span class="engine-model">PUBLIC DATA</span></article>
+      <article class="engine-row"><span class="engine-number">05</span><div class="engine-name"><span>Account</span><h3>Vault</h3></div><p>Trade escrow, Reserve and an append-only ledger with a public verification page.</p><span class="engine-model">RULES · LEDGER</span></article>
     </div>
   </div></section>
 
-  <section><div class="wrap grid g2">
-    <div><p class="label">Designed for trust</p><h2>Trust without exposing people</h2></div>
-    <ul class="small trust-list" style="margin:0;padding-left:18px;display:grid;gap:8px">
-      <li><b>Consent first.</b> Nothing is checked until the person agrees that their photos and location become a public Evidence File.</li>
-      <li><b>Pseudonyms only.</b> Phone numbers are never published; people appear as <span class="mono">eco_3f9a…</span>, and pickup points are rounded to about 1 km.</li>
-      <li><b>No accusations.</b> If the evidence is unclear, the result is "needs better evidence", and the agent says which photo would settle it.</li>
-      <li><b>A person decides every dispute.</b> The AI's recommendation and the human's decision are both shown on the trade page.</li>
-      <li><b>No face database and nothing biometric on the ledger.</b> Face pay waits for a certified provider; the WhatsApp code works today.</li>
-      <li>Meta Model API runs in Standard mode; contributor models are refused in code. <b>Disclosure:</b> This hackathon build runs on Meta's free developer credits; under those terms Meta may use what is sent to its models to improve its products. The consent message says so too. ECOIN in this build is a test ledger.</li>
-      <li>We attack our own checks with Muse Image fakes and publish the results (<a href="https://github.com/paulmalik431-ctrl/proof-of-planet/blob/main/evals/README.md">Ghost Audit</a>).</li>
-    </ul>
+  <section class="section numbers"><div class="wrap">
+    <div class="numbers-head"><div><p class="label">A view into the system <span>/ 04</span></p><h2>Nothing hidden<br>in the totals.</h2></div><a href="ledger.html">Audit the ledger <span>↗</span></a></div>
+    <div class="stats-grid" id="stats">
+      <div class="stat"><span>01 / ACTION</span><b>—</b><small>verified climate actions</small></div>
+      <div class="stat"><span>02 / MATERIAL</span><b>—</b><small>recyclables traded · units</small></div>
+      <div class="stat"><span>03 / ISSUE</span><b>—</b><small>ECOIN minted by Proof of Planet</small></div>
+      <div class="stat"><span>04 / RESERVE</span><b>—</b><small>ECOIN in the Reserve</small></div>
+    </div>
+    <p class="stats-note" id="stats-note"></p>
   </div></section>
+
+  <section class="section guardrails"><div class="wrap guard-grid">
+    <div><p class="label">The boundary <span>/ 05</span></p><p class="guard-statement">AI can look and speak.<br><em>Only rules move money.</em></p><p class="guard-copy">Models produce observations and recommendations. They never choose a price, reward amount or payout.</p><a class="text-link" href="ledger.html">Read the transaction rules <span>↗</span></a></div>
+    <div class="gate-list"><div class="gate"><span>01</span><p><b>Mint</b> after evidence qualifies under the protocol.</p></div><div class="gate"><span>02</span><p><b>Escrow</b> from the buyer’s own balance, locked to that trade.</p></div><div class="gate"><span>03</span><p><b>Release</b> from accepted intake or a human review.</p></div><div class="gate"><span>04</span><p><b>Pay</b> only after the customer’s one-time code is confirmed.</p></div></div>
+  </div></section>
+
+  <section class="section trust"><div class="wrap trust-grid"><div><p class="label">Built to be questioned <span>/ 06</span></p><h2>Trust is a system<br>property.</h2></div><div class="trust-points"><p><b>Consent first.</b> People agree before evidence is checked.</p><p><b>Private by design.</b> Public records use pseudonyms; phone numbers stay private and pickup points are rounded.</p><p><b>Fail safe.</b> Unclear evidence is held for better proof. Disputes go to a person.</p><p><b>Open to inspection.</b> Public views expose only what is safe to share; the ledger can be checked in a browser.</p><p class="disclosure">Meta Model API runs in Standard mode. Meta’s free developer credit terms permit use of submitted data to improve its products; the consent flow discloses this. ECOIN in this build is a test ledger.</p></div></div></section>
 </main>
-<footer><div class="wrap">ECO · Proof of Planet: built for the Meta Global AI Developer Hackathon, Oct 26 – Nov 4, 2026 · <a href="https://github.com/paulmalik431-ctrl/proof-of-planet">Source code</a></div></footer>
-
+<footer class="home-footer"><div class="wrap footer-inner"><a class="footer-mark" href="./">ECO<span> / PROOF OF PLANET</span></a><p>Climate value, made visible.</p><a href="https://github.com/paulmalik431-ctrl/proof-of-planet">SOURCE CODE ↗</a></div><div class="wrap footer-bottom">BUILT FOR THE META GLOBAL AI DEVELOPER HACKATHON <span>OCT 26 — NOV 4, 2026</span></div></footer>
 <script type="module">
 import { nav, rest, configured, WHATSAPP_NUMBER } from "./app.js";
 document.getElementById("nav").replaceWith(nav());

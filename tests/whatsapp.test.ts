@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { parseWebhook, verifySignature } from "../supabase/functions/_core/whatsapp.ts";
+import { parseWebhook, sendText, verifySignature, webhookChallenge } from "../supabase/functions/_core/whatsapp.ts";
 
 test("parses text, image, location and audio messages from a Cloud API webhook", () => {
   const payload = { entry: [{ changes: [{ value: { messages: [
@@ -22,4 +22,20 @@ test("checks the X-Hub-Signature-256 header", async () => {
   expect(await verifySignature("secret", body, `sha256=${hex}`)).toBe(true);
   expect(await verifySignature("secret", body + " ", `sha256=${hex}`)).toBe(false);
   expect(await verifySignature("secret", body, null)).toBe(false);
+  expect(await verifySignature("", body, `sha256=${hex}`)).toBe(false);
+});
+
+test("webhook handshake requires a configured, non-empty matching verification token", () => {
+  expect(webhookChallenge("subscribe", "verify-me", "challenge-1", "verify-me")).toBe("challenge-1");
+  expect(webhookChallenge("subscribe", "", "challenge-1", "")).toBeNull();
+  expect(webhookChallenge("subscribe", "wrong", "challenge-1", "verify-me")).toBeNull();
+  expect(webhookChallenge("unsubscribe", "verify-me", "challenge-1", "verify-me")).toBeNull();
+  expect(webhookChallenge("subscribe", "verify-me", null, "verify-me")).toBeNull();
+});
+
+test("outbound WhatsApp refuses missing configuration before making a request", async () => {
+  let called = false;
+  await expect(sendText({ token: "", phoneNumberId: "", fetch: async () => { called = true; return new Response("ok"); } }, "254712345678", "hello"))
+    .rejects.toThrow("WhatsApp messaging is not configured");
+  expect(called).toBe(false);
 });
