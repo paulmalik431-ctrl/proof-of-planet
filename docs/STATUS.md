@@ -9,6 +9,7 @@
 ## Live checks
 - Homepage is live with the custom SVG system diagram and was inspected at desktop and 390px mobile widths. No generated imagery is used.
 - WhatsApp webhook now rejects an empty verification token (GET returns 403). An unconfigured POST returns 503. These checks confirm fail-closed behavior; they do not prove a WhatsApp conversation works.
+- Meta Developers homepage is open in the in-app browser. Facebook sign-in and app setup are still pending; no account or app state is assumed.
 - Seller simulator session `JrLoopOct29A1` accepted the description of empty plastic jerrycans and asked for the actual item count. Poll confirms the session exists with no new message. No quantity was guessed, no listing draft was created, and no ECOIN moved.
 - A new post-PR #8 live simulator consent check returned the updated welcome text mentioning jerrycan reuse/recycling; no model call or ECOIN movement was needed.
 - The earlier PET draft was canceled for a material mismatch; its one-time photo code expired. No live trade, buyer bid, escrow, delivery, intake, payout, refund, or settlement has been completed.
