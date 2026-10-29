@@ -29,7 +29,7 @@ const WITNESS: ToolDef[] = [
 ];
 const LOOP_SELLER: ToolDef[] = [
   fn("sell_waste", "Loop: start selling a waste stream to businesses that add value to it (e.g. rice husk to briquette makers). Returns a one-time code the seller writes on paper and puts in the photo.", { material: MATERIAL, quantity: { type: "number", description: "in the material's unit (kg, items or litres)" }, min_price: { type: "number", description: "optional lowest acceptable ECOIN per unit" } }, ["material", "quantity"]),
-  fn("publish_listing", "Loop: when the draft listing has its photo (with the code) and location, Meta AI identifies and grades it, then the best buyer bid is matched."),
+  fn("publish_listing", "Loop: when the draft listing has its photo (with the code) and location, Meta AI identifies and grades it, then the best buyer bid is matched. A rejected result cancels the draft; start sell_waste again for a fresh code and never reuse the old code."),
   fn("mark_delivered", "Loop (seller): after delivering, with the delivery photo sent (it is kept aside), tell the buyer to confirm.", { trade_id: TRADE_ID }, ["trade_id"]),
   fn("respond_to_dispute", "Loop (seller): give the seller's side of a disputed trade.", { trade_id: TRADE_ID, statement: { type: "string" } }, ["trade_id", "statement"]),
   fn("my_trades", "Loop: the person's trades and their status."),
@@ -229,10 +229,11 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
       if (!l || l.status !== "draft") return { error: "No draft listing. Use sell_waste first." };
       if (!l.photo_path || l.lat === null) return { error: "Need the lot photo and the pickup location first.", state: await state(c) };
       if (session.verifications_today >= c.deps.limits.verificationsPerDay) return { error: "Daily check limit reached. Try again tomorrow." };
-      if (l.photo_sha256 && await store.photoHashUsedElsewhere(l.photo_sha256, l.id)) {
+      if ((l.photo_sha256 && await store.photoHashUsedElsewhere(l.photo_sha256, l.id))
+        || (l.photo_phash && await store.photoNearDuplicate(l.photo_phash, l.id))) {
         await store.updateListing(l.id, { status: "cancelled" });
         session.open_listing_id = null;
-        return { outcome: "rejected", reasons: ["This exact photo was already used for another claim or listing."] };
+        return { outcome: "rejected", reasons: ["This photo is identical or near-identical to one used for another claim or listing."] };
       }
       session.verifications_today++;
       const m = MATERIALS[l.material];
@@ -242,7 +243,10 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
       if (as.outcome !== "listed") {
         await store.updateListing(l.id, { assessment: as, sam_count: as.sam_count, photo_path: as.outcome === "rejected" ? l.photo_path : null, status: as.outcome === "rejected" ? "cancelled" : "draft" });
         if (as.outcome === "rejected") session.open_listing_id = null;
-        return { outcome: as.outcome, reasons: as.reasons, what_the_ai_saw: as.observation.notes, next: as.outcome === "needs_better_photo" ? "Ask for a better photo, then call publish_listing again." : undefined };
+        const next = as.outcome === "needs_better_photo"
+          ? "Ask for a better photo matching the same material and code, then call publish_listing again."
+          : "This draft was cancelled. If the seller wants to try again, start sell_waste to create a new draft and challenge code before asking for another photo.";
+        return { outcome: as.outcome, reasons: as.reasons, what_the_ai_saw: as.observation.notes, next };
       }
       await store.updateListing(l.id, { assessment: as, sam_count: as.sam_count, grade: as.grade, quantity: as.verified_quantity, status: "open" });
       session.open_listing_id = null;
