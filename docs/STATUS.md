@@ -4,17 +4,18 @@
 - PR #3 (`a7b3755`): C6 evaluation protocol/runner, C1 near-duplicate detection, K3 traces, C3 ledger anchoring, and related tests.
 - PR #5 (`85e54ab`): redesigned homepage and fail-closed WhatsApp webhook. CI, Pages, and Supabase deployment succeeded.
 - PR #7 (`133e4e0`): separate item-counted `plastic_jerrycans` Loop material. PR #8 (`94a5d15`): welcome copy mentions jerrycan reuse/recycling. Their CI and backend deployments succeeded.
-- PR #9 (`95db204`): status update. Current local checkout was refreshed from `main` at `95db204`; no local code changes are pending.
+- PR #9 (`95db204`) and PR #10 (`e36079d`): status updates. Local checkout is at `main` commit `e36079d`; no product code changes are pending.
 
 ## Live checks
 - Homepage is live with the custom SVG system diagram and was inspected at desktop and 390px mobile widths. No generated imagery is used.
 - WhatsApp webhook now rejects an empty verification token (GET returns 403). An unconfigured POST returns 503. These checks confirm fail-closed behavior; they do not prove a WhatsApp conversation works.
 - Seller simulator session `JrLoopOct29A1` accepted the description of empty plastic jerrycans and asked for the actual item count. Poll confirms the session exists with no new message. No quantity was guessed, no listing draft was created, and no ECOIN moved.
+- A new post-PR #8 live simulator consent check returned the updated welcome text mentioning jerrycan reuse/recycling; no model call or ECOIN movement was needed.
 - The earlier PET draft was canceled for a material mismatch; its one-time photo code expired. No live trade, buyer bid, escrow, delivery, intake, payout, refund, or settlement has been completed.
 - Prior live tree simulator run `c02f0119-b416-4ab9-bc81-74ad89f186f4` reported `planting: 1` and a model-written reply after `verify_claim`. Treat this as a historical successful run, not proof of a new post-deploy tree run.
 
 ## Verification
-- Local full `bun test tests/`: 129 passed, 0 failed, 445 assertions. This workspace includes the nested duplicate `work/proof-of-planet/tests/`; clean GitHub CI passed on PR #8 and PR #9.
+- Local full `bun test tests/`: 129 passed, 0 failed, 445 assertions. This workspace includes the nested duplicate `work/proof-of-planet/tests/`; clean GitHub CI passed on PR #8, PR #9, and PR #10.
 - `bun run build:web`, generated ledger bundle comparison, and `git diff --check` passed during PR #5/#7 work. PR #8 CI repeated the build check.
 - No C6 model evaluation is claimed. `evals/lots/labels.json` is still empty.
 
