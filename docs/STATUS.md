@@ -11,6 +11,7 @@
 - WhatsApp webhook now rejects an empty verification token (GET returns 403). An unconfigured POST returns 503. These checks confirm fail-closed behavior; they do not prove a WhatsApp conversation works.
 - Meta for Developers sign-in page is open in the in-app browser with “Continue with Facebook” available. Authentication and app setup are still pending; no account or app state is assumed.
 - Seller simulator session `JrLoopOct29A1` accepted the description of empty plastic jerrycans and asked for the actual item count. Poll confirms the session exists with no new message. No quantity was guessed, no listing draft was created, and no ECOIN moved.
+- Buyer simulator session `LoopBuyerOct29B1` registered as “Simulator Recycler”; `top_up_test_ecoin` issued the fixed 5,000 demo-only ECOIN deposit. A wallet read confirmed the balance and “test deposit (demo only)” entry. No bid was submitted because there is no seller listing or buyer-set price yet.
 - A new post-PR #8 live simulator consent check returned the updated welcome text mentioning jerrycan reuse/recycling; no model call or ECOIN movement was needed.
 - The earlier PET draft was canceled for a material mismatch; its one-time photo code expired. No live trade, buyer bid, escrow, delivery, intake, payout, refund, or settlement has been completed.
 - Prior live tree simulator run `c02f0119-b416-4ab9-bc81-74ad89f186f4` reported `planting: 1` and a model-written reply after `verify_claim`. Treat this as a historical successful run, not proof of a new post-deploy tree run.
