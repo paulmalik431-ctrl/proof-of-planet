@@ -88,3 +88,10 @@ Full root test suite after the live-rejection retry-guidance fix: 71 passed, 0 f
 - The previously submitted jerrycan photo belongs to a canceled draft; its one-time challenge expired. A fresh genuine photo with the new code will be needed after the seller count is confirmed. No live bid, escrow, intake, payout, or refund has been tested for this lot.
 - Updated the welcome message to include jerrycan reuse/recycling examples. Full local `bun test tests/`: 129 passed, 0 failed, 445 assertions; this workspace includes a nested duplicate test tree. `git diff --check` passed. The new welcome-copy change awaits CI and deployment.
 - Meta Developers remains logged out. WhatsApp secrets and public phone number are still absent, so WhatsApp messaging is not live. The empty-token webhook returns 403 and an unconfigured POST returns 503.
+## Latest session update — Oct 29, 2026
+
+- PR #7 (`133e4e0`) added and deployed the separate item-counted `plastic_jerrycans` material; CI, backend deployment, and Pages deployment succeeded. PR #8 (`94a5d15`) updated the welcome copy to mention jerrycan reuse/recycling; CI and backend deployment succeeded.
+- Live simulator session `JrLoopOct29A1` accepted the seller’s description of empty plastic jerrycans and asked for the actual item count. The founder is checking with the seller. No quantity was guessed, no listing draft was made, and no ECOIN moved.
+- The old photo challenge expired with the canceled PET draft. A new genuine photo with the fresh code is still required after the seller count is known. A real buyer and buyer-set bid are also needed before escrow and settlement can be tested.
+- Full local `bun test tests/`: 129 passed, 0 failed, 445 assertions; this workspace includes the nested duplicate test tree. PR #8 CI passed on the clean repository checkout. `git diff --check` passed.
+- WhatsApp remains unconnected. Meta Developers is logged out; Supabase WhatsApp secrets and the public WhatsApp number are absent. Live webhook checks: empty-token GET returns 403; unconfigured POST returns 503.
