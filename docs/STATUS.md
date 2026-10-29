@@ -4,7 +4,7 @@
 - PR #3 (`a7b3755`): C6 evaluation protocol/runner, C1 near-duplicate detection, K3 traces, C3 ledger anchoring, and related tests.
 - PR #5 (`85e54ab`): redesigned homepage and fail-closed WhatsApp webhook. CI, Pages, and Supabase deployment succeeded.
 - PR #7 (`133e4e0`): separate item-counted `plastic_jerrycans` Loop material. PR #8 (`94a5d15`): welcome copy mentions jerrycan reuse/recycling. Their CI and backend deployments succeeded.
-- PR #9 (`95db204`) and PR #10 (`e36079d`): status updates. Local checkout is at `main` commit `e36079d`; no product code changes are pending.
+- PRs #9–#11 updated the current project status. The local checkout tracks `main` and has no uncommitted product-code changes.
 
 ## Live checks
 - Homepage is live with the custom SVG system diagram and was inspected at desktop and 390px mobile widths. No generated imagery is used.
