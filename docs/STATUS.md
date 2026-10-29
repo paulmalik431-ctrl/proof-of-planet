@@ -80,5 +80,11 @@ Full root test suite after the live-rejection retry-guidance fix: 71 passed, 0 f
 ## Loop material follow-up — Oct 29, 2026
 
 - Added a separate `plastic_jerrycans` catalog material for empty, clean plastic jerrycans. It is counted per item and is distinct from PET bottles; seller claims and buyer bids still control quantity and price, while escrow and weighed-intake rules are unchanged. README wording now reflects buyer-set bids and intake-based settlement.
-- The local Loop regression suite passes 23 tests and 116 assertions, including an explicit distinction between jerrycans and PET bottles. This category is not deployed yet.
+- PR #7 (`133e4e0`) merged; CI passed and the Supabase backend plus Pages deployments succeeded. The jerrycan category is now deployed. The local Loop regression suite passes 23 tests and 116 assertions, including an explicit distinction between jerrycans and PET bottles.
 - No live listing was started: the prior seller draft was canceled and its photo challenge expired. A fresh one-time code requires a new genuine lot photo before listing. The current photo can’t be reused as evidence for a new code. A real buyer and price bid are also needed for trade settlement.
+## Latest session update — Oct 29, 2026
+
+- Live Loop seller simulator session `JrLoopOct29A1` has accepted the user’s description of empty plastic jerrycans and asked for the actual item count. The founder is checking with the seller. No quantity was inferred, no draft listing was created, and no ECOIN moved.
+- The previously submitted jerrycan photo belongs to a canceled draft; its one-time challenge expired. A fresh genuine photo with the new code will be needed after the seller count is confirmed. No live bid, escrow, intake, payout, or refund has been tested for this lot.
+- Updated the welcome message to include jerrycan reuse/recycling examples. Full local `bun test tests/`: 129 passed, 0 failed, 445 assertions; this workspace includes a nested duplicate test tree. `git diff --check` passed. The new welcome-copy change awaits CI and deployment.
+- Meta Developers remains logged out. WhatsApp secrets and public phone number are still absent, so WhatsApp messaging is not live. The empty-token webhook returns 403 and an unconfigured POST returns 503.
