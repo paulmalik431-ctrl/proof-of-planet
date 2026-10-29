@@ -51,6 +51,11 @@ async function load() {
       el("td", { class: "mono" }, el("a", { href: `ledger.html#seq-${e.seq}` }, `${e.amount > 0 ? "+" : ""}${e.amount} · #${e.seq}`))))) : el("p", { class: "muted" }, "Nothing has moved yet."),
     el("p", { class: "small muted", style: "margin-top:10px" }, "The seller pays 2% marketplace + 1% escrow fees on what is accepted; 30% of every fee goes to the ECO Reserve. Anything not accepted returns to the buyer."));
   main.append(el("div", { class: "grid g2" }, left, right));
+  const modelTrace = l?.assessment?.models ?? [];
+  if (modelTrace.length) main.append(el("div", { class: "card", style: "margin-top:16px" },
+    el("p", { class: "label" }, "Lot assessment · model call trace"),
+    el("ol", { class: "timeline" }, modelTrace.map((call) => el("li", {},
+      el("b", {}, call.model), el("div", { class: "small muted" }, `${call.endpoint} · ${call.ms} ms · ${call.ok ? "completed" : "failed"}`))))));
 
   if (t.dispute_reason || t.mediation || t.decision) {
     const m = t.mediation, d = t.decision;

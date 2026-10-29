@@ -4,6 +4,8 @@ import { MemoryStore } from "../supabase/functions/_core/store.ts";
 import { supply, SYSTEM, verifyChain } from "../supabase/functions/_core/ledger.ts";
 import { bestMatch, gradeLot, MATERIALS, sameCode } from "../supabase/functions/_core/loop.ts";
 import { checkCode, hashCode, normalisePhone } from "../supabase/functions/_core/glance.ts";
+import { dHash } from "../supabase/functions/_core/phash.ts";
+import { runTool } from "../supabase/functions/_core/tools.ts";
 import { fakeMeta, png, type Turn } from "./fake-meta.ts";
 
 const T = (name: string, args: Record<string, unknown> = {}): Turn => ({ tools: [[name, args]] });
@@ -16,9 +18,9 @@ const m = (from: string, x: Partial<Inbound>): Inbound => ({ id: `m${++n}`, from
 
 const LOT = { identified_as: "rice_husk", matches_claim: "yes", condition_good: "yes", code_seen: "", estimated_quantity: 500, possibly_ai_generated_or_edited: false, confidence: 0.9, notes: "About ten sacks of dry rice husk; code visible on paper." };
 
-function world(agent: Array<Turn | (() => Turn)>, opts: { codeInPhoto?: boolean; mediation?: Record<string, unknown> } = {}) {
+function world(agent: Array<Turn | (() => Turn)>, opts: { codeInPhoto?: boolean; mediation?: Record<string, unknown>; lotPatch?: Record<string, unknown> } = {}) {
   const store = new MemoryStore(() => at);
-  const lot = () => ({ ...LOT, code_seen: opts.codeInPhoto === false ? "" : `code ${store.listings.at(-1)?.challenge ?? ""}` });
+  const lot = () => ({ ...LOT, ...opts.lotPatch, code_seen: opts.codeInPhoto === false ? "" : `code ${store.listings.at(-1)?.challenge ?? ""}` });
   const { meta, log } = fakeMeta({ sam: { sack: 10 }, observation: {}, json: { lot_observation: lot, ...(opts.mediation ? { mediation: opts.mediation } : {}) }, agent });
   const deps = { store, meta, publicUrl: "https://eco.example", limits: { messagesPerDay: 100, verificationsPerDay: 10 } };
   const id = async (phone: string) => (await store.accountByPhone(phone))!.id;
@@ -111,6 +113,47 @@ describe("Waste-to-value: rice husk to a briquette maker, then a shop", () => {
     await handle(w.deps, m(FARMER, { kind: "location", location: { lat: 0, lng: 0 } }));
     expect(w.store.listings[0].status).toBe("draft");
     expect(w.store.listings[0].assessment?.reasons.join(" ")).toContain(w.store.listings[0].challenge!);
+  });
+
+  test("a wrong-material rejection cancels the draft and requires a fresh challenge", async () => {
+    const w = world([], { lotPatch: { identified_as: "sawdust", matches_claim: "no", confidence: 0.95, notes: "Sawdust in sacks." } });
+    const account = await w.store.createAccount(FARMER);
+    const photo_path = await w.store.savePhoto(png(21), "image/png");
+    const listing = await w.store.createListing({
+      seller: account.id, material: "rice_husk", quantity: 500, unit: "kg", price: 0,
+      grade: null, sam_count: 0, challenge: "ABCD", photo_path, photo_sha256: "wrong-material-test",
+      lat: 0, lng: 0, status: "draft", assessment: null,
+    });
+    const session = {
+      account_id: account.id, history: [], open_claim_id: null, open_listing_id: listing.id,
+      last_location: { lat: 0, lng: 0 }, day: "2026-10-28", messages_today: 0, verifications_today: 0,
+    };
+    const result = await runTool({ deps: w.deps, account, session, now: at }, "publish_listing", {});
+
+    expect(result).toMatchObject({
+      outcome: "rejected",
+      next: "This draft was cancelled. If the seller wants to try again, start sell_waste to create a new draft and challenge code before asking for another photo.",
+    });
+    expect(w.store.listings[0].status).toBe("cancelled");
+    expect(session.open_listing_id).toBeNull();
+    expect(w.store.trades).toHaveLength(0);
+  });
+  test("Loop cancels a listing whose photo is a near duplicate of a prior claim", async () => {
+    const w = world([T("sell_waste", { material: "rice_husk", quantity: 500 }), say("photo?"), say("location?"), T("publish_listing"), say("duplicate rejected")]);
+    const gray = Uint8Array.from({ length: 64 * 64 }, (_, i) => Math.round(128 + 40 * Math.sin((i % 64) / 9) + 25 * Math.cos(Math.floor(i / 64) / 11)));
+    const phash = dHash(gray, 64, 64);
+    w.deps.decodeImage = () => ({ gray, width: 64, height: 64 });
+    const oldAccount = await w.store.createAccount("254700000008");
+    const oldClaim = await w.store.createClaim({ account_id: oldAccount.id, protocol: "tree_planting", parent_id: null });
+    await w.store.addEvidence({ claim_id: oldClaim.id, account_id: oldAccount.id, kind: "photo", role: "planting", path: "prior.jpg", sha256: "old-sha", phash, lat: null, lng: null, text: null });
+    await handle(w.deps, m(FARMER, { text: "yes" }));
+    await handle(w.deps, m(FARMER, { text: "rice husk 500 kg" }));
+    await handle(w.deps, m(FARMER, { kind: "image", image: { bytes: png(12), mime: "image/png" } }));
+    await handle(w.deps, m(FARMER, { kind: "location", location: { lat: 0, lng: 0 } }));
+    await handle(w.deps, m(FARMER, { text: "publish listing" }));
+    expect(w.store.listings[0].status).toBe("cancelled");
+    expect(w.store.listings[0].assessment).toBeNull();
+    expect(w.store.trades).toHaveLength(0);
   });
 
   test("intake can't exceed what was escrowed, and zero must go through a dispute", async () => {

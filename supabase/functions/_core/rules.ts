@@ -35,7 +35,7 @@ export function decide(p: Protocol, obs: Observation, counts: Record<string, num
   const doubts: string[] = [];
   const confident = obs.confidence >= CONFIDENT;
 
-  if (ctx.duplicatePhoto) hard.push("This exact photo was already used for another claim.");
+  if (ctx.duplicatePhoto) hard.push("This photo is identical or near-identical to one used for another claim.");
   if (!ctx.hasLocation) doubts.push("No location was shared.");
 
   if (p.parent) {

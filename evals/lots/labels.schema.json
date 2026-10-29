@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Frozen waste-lot evaluation labels",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["id", "file", "image_sha256", "material", "claimed_qty", "code", "expected", "human_count", "fake", "notes", "reviewers", "review_agreement"],
+    "properties": {
+      "id": { "type": "string", "minLength": 1 },
+      "file": { "type": "string", "pattern": "^[^/\\\\]+\\.(jpg|jpeg|png|webp)$" },
+      "image_sha256": { "type": "string", "pattern": "^[a-fA-F0-9]{64}$" },
+      "material": { "type": "string", "enum": ["rice_husk", "sawdust", "maize_cobs", "coffee_pulp", "used_cooking_oil", "food_waste", "pet_bottles", "cans", "cardboard", "e_waste"] },
+      "claimed_qty": { "type": "number", "exclusiveMinimum": 0 },
+      "code": { "type": "string", "maxLength": 40 },
+      "expected": { "type": "string", "enum": ["listed", "needs_better_photo", "rejected"] },
+      "human_count": { "type": ["integer", "null"], "minimum": 0 },
+      "fake": { "type": "boolean" },
+      "notes": { "type": "string", "minLength": 1 },
+      "reviewers": { "type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": { "type": "string", "pattern": "^reviewer_[a-zA-Z0-9_-]{3,32}$" } },
+      "review_agreement": { "const": true }
+    }
+  }
+}

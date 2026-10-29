@@ -5,7 +5,7 @@
 //   Pricing: never invented by a model. Buyers post bids (price per unit); the best eligible bid wins.
 //   Settlement: escrow holds the buyer's ECOIN; the buyer's weighed intake decides what is paid.
 //   Disputes: Muse Spark recommends, a person decides.
-import type { MetaClient } from "./meta.ts";
+import type { MetaClient, ModelCallTrace } from "./meta.ts";
 import { haversineM } from "./rules.ts";
 import { countObjects, parseSamOutput } from "./sam.ts";
 
@@ -62,6 +62,7 @@ export interface Listing {
   challenge: string | null;
   photo_path: string | null;
   photo_sha256: string | null;
+  photo_phash?: string | null;
   lat: number | null;
   lng: number | null;
   status: "draft" | "open" | "reserved" | "sold" | "cancelled";
@@ -130,6 +131,7 @@ export interface Assessment {
   verified_quantity: number;
   outcome: "listed" | "needs_better_photo" | "rejected";
   reasons: string[];
+  models?: ModelCallTrace[];
 }
 
 const LOT_SCHEMA = {
@@ -175,10 +177,14 @@ export function gradeLot(m: Material, claimed: number, samCount: number, o: LotO
 }
 
 export async function assessLot(meta: MetaClient, m: Material, claimed: number, photoDataUrl: string, challenge: string | null): Promise<Assessment> {
-  const [sam, obs] = await Promise.all([
-    meta.canSegment ? meta.segment(photoDataUrl, m.sam).then((t) => countObjects(parseSamOutput(t))) : Promise.resolve(0),
-    meta.chatJSON<LotObservation>({
-      system: `You check a photo of waste offered for sale. The seller says: ${claimed} ${m.unit} of ${m.title}.
+  const trace: ModelCallTrace[] = [];
+  const previousOnCall = meta.onCall;
+  meta.onCall = (event) => { trace.push(event); previousOnCall?.(event); };
+  try {
+    const [sam, obs] = await Promise.all([
+      meta.canSegment ? meta.segment(photoDataUrl, m.sam).then((t) => countObjects(parseSamOutput(t))) : Promise.resolve(0),
+      meta.chatJSON<LotObservation>({
+        system: `You check a photo of waste offered for sale. The seller says: ${claimed} ${m.unit} of ${m.title}.
 Answer only from the photo; use "unclear" when unsure.
 identified_as: which waste this is (one of the listed ids), "other" or "unclear".
 matches_claim: does it show ${m.title.toLowerCase()}?
@@ -186,23 +192,26 @@ condition_good: does it look ${m.quality}?
 code_seen: any short code written on paper in the photo, exactly as written, or "".
 estimated_quantity: your estimate in ${m.unit} (count ${m.counts} if that is all you can see).
 possibly_ai_generated_or_edited: true only for clear signs. confidence: 0..1. notes: ≤40 words, plain, no accusations.`,
-      user: [{ type: "text", text: "Lot photo:" }, { type: "image_url", image_url: { url: photoDataUrl } }],
-      name: "lot_observation",
-      schema: LOT_SCHEMA,
-    }),
-  ]);
-  const tri = (v: unknown) => (v === "yes" || v === "no" ? v : "unclear") as "yes" | "no" | "unclear";
-  const o: LotObservation = {
-    identified_as: (obs.identified_as in MATERIALS || obs.identified_as === "other") ? obs.identified_as : "unclear",
-    matches_claim: tri(obs.matches_claim),
-    condition_good: tri(obs.condition_good),
-    code_seen: String(obs.code_seen ?? "").slice(0, 40),
-    estimated_quantity: Math.max(0, Number(obs.estimated_quantity) || 0),
-    possibly_ai_generated_or_edited: obs.possibly_ai_generated_or_edited === true,
-    confidence: Math.max(0, Math.min(1, Number(obs.confidence) || 0)),
-    notes: String(obs.notes ?? "").slice(0, 300),
-  };
-  return gradeLot(m, claimed, sam, o, challenge);
+        user: [{ type: "text", text: "Lot photo:" }, { type: "image_url", image_url: { url: photoDataUrl } }],
+        name: "lot_observation",
+        schema: LOT_SCHEMA,
+      }),
+    ]);
+    const tri = (v: unknown) => (v === "yes" || v === "no" ? v : "unclear") as "yes" | "no" | "unclear";
+    const o: LotObservation = {
+      identified_as: (obs.identified_as in MATERIALS || obs.identified_as === "other") ? obs.identified_as : "unclear",
+      matches_claim: tri(obs.matches_claim),
+      condition_good: tri(obs.condition_good),
+      code_seen: String(obs.code_seen ?? "").slice(0, 40),
+      estimated_quantity: Math.max(0, Number(obs.estimated_quantity) || 0),
+      possibly_ai_generated_or_edited: obs.possibly_ai_generated_or_edited === true,
+      confidence: Math.max(0, Math.min(1, Number(obs.confidence) || 0)),
+      notes: String(obs.notes ?? "").slice(0, 300),
+    };
+    return { ...gradeLot(m, claimed, sam, o, challenge), models: trace };
+    } finally {
+    meta.onCall = previousOnCall;
+  }
 }
 
 // ───────── matching: buyers' bids compete ─────────

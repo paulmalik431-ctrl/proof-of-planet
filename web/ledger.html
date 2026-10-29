@@ -16,6 +16,7 @@
     <button class="btn" id="verify" disabled>Verify the whole chain</button>
     <span id="result" class="mono small"></span>
   </p>
+  <p id="anchor" class="small muted" aria-live="polite">Loading the published ledger fingerprint…</p>
   <div class="table-scroll" style="margin-top:16px">
     <table class="ledger">
       <thead><tr><th>#</th><th>When (UTC)</th><th>Account</th><th>ECOIN</th><th>Kind</th><th>For</th><th>Evidence</th><th>Hash</th><th>Previous</th></tr></thead>
@@ -25,13 +26,23 @@
   <p class="small muted" style="margin-top:12px">ECOIN is minted only by <b>reward</b> (a verified climate action) or a labelled test <b>deposit</b>; every other movement is a set of entries that sums to zero. Hash = SHA-256 of <span class="mono">seq|prev_hash|account|amount|kind|ref|memo|time</span>. The same formula runs in the database (<span class="mono">ledger_post</span>) and in this page.</p>
 </main>
 <script type="module">
-import { nav, rest, configured, el, short, notConfigured, refLink, SYSTEM_NAMES } from "./app.js";
+import { nav, rest, configured, el, short, notConfigured, refLink, SYSTEM_NAMES, REPO_URL } from "./app.js";
 import { verifyChain, supply } from "./js/ledger.js";
+import { compareAnchor, parseAnchors } from "./js/anchor.js";
 document.getElementById("nav").replaceWith(nav());
 const account = new URLSearchParams(location.search).get("account");
 const tbody = document.getElementById("rows");
 const btn = document.getElementById("verify");
 const result = document.getElementById("result");
+const anchorNode = document.getElementById("anchor");
+let anchor = null;
+try {
+  const rawUrl = REPO_URL.replace("https://github.com/", "https://raw.githubusercontent.com/").replace(/\/$/, "") + "/main/anchors/ledger-heads.jsonl";
+  const response = await fetch(rawUrl, { cache: "no-store" });
+  if (response.ok) anchor = parseAnchors(await response.text()).at(-1) ?? null;
+  else if (response.status !== 404) throw new Error("anchor fetch failed");
+  anchorNode.textContent = anchor ? "Last published fingerprint: #" + anchor.seq + " · verify the chain to compare." : "No published ledger fingerprint yet.";
+} catch { anchorNode.textContent = "Published ledger fingerprint unavailable."; }
 
 if (!configured) { tbody.innerHTML = ""; notConfigured(document.querySelector("main")); }
 else {
@@ -67,8 +78,18 @@ else {
     const t0 = performance.now();
     const v = await verifyChain(all);
     document.querySelectorAll("tr.bad").forEach((t) => t.classList.remove("bad"));
-    if (v.ok) result.textContent = `✓ Intact: ${all.length} entries re-hashed in ${Math.round(performance.now() - t0)} ms. Nothing has been altered.`;
-    else { result.textContent = `✗ Broken at #${v.brokenAt}: ${v.reason}`; document.getElementById(`seq-${v.brokenAt}`)?.classList.add("bad"); }
+    if (v.ok) {
+      result.textContent = `✓ Intact: ${all.length} entries re-hashed in ${Math.round(performance.now() - t0)} ms. Nothing has been altered.`;
+      const comparison = compareAnchor(anchor, all);
+      anchorNode.textContent = comparison === "matches" ? "Last published fingerprint: #" + anchor.seq + " · matches ✓"
+        : comparison === "differs" ? "Last published fingerprint: #" + anchor.seq + " · differs ✗"
+        : comparison === "not-found" ? "Last published fingerprint #" + anchor.seq + " is outside the loaded ledger."
+        : "No published ledger fingerprint yet.";
+    } else {
+      result.textContent = `✗ Broken at #${v.brokenAt}: ${v.reason}`;
+      anchorNode.textContent = "Cannot compare the published fingerprint because the chain check failed.";
+      document.getElementById(`seq-${v.brokenAt}`)?.classList.add("bad");
+    }
   };
 }
 </script>

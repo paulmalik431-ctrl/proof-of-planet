@@ -67,9 +67,12 @@ export async function verifyClaim(meta: MetaClient, store: Store, claimId: strin
 
   await store.updateClaim(claim.id, { status: "verifying" });
   let calls = 0;
+  const trace: NonNullable<Check["models"]["trace"]> = [];
   const t0 = Date.now();
   const urls = new Map<string, string>();
   for (const [role, e] of photos) urls.set(role, await store.photoDataUrl(e.path!));
+  const previousOnCall = meta.onCall;
+  meta.onCall = (event) => { trace.push(event); previousOnCall?.(event); };
 
   try {
     // SAM 3.1: one call per (photo, noun phrase), in parallel.
@@ -107,7 +110,10 @@ export async function verifyClaim(meta: MetaClient, store: Store, claimId: strin
     if (!meta.canSegment) for (const r of p.photos) counts[r.role] = Math.max(0, Math.round(Number(raw?.visible_counts?.[r.role]) || 0));
 
     let duplicate = false;
-    for (const e of photos.values()) if (e.sha256 && await store.photoHashUsedElsewhere(e.sha256, claim.id)) duplicate = true;
+    for (const e of photos.values()) {
+      if ((e.sha256 && await store.photoHashUsedElsewhere(e.sha256, claim.id))
+        || (e.phash && await store.photoNearDuplicate(e.phash, claim.id))) duplicate = true;
+    }
     const hasLoc = claim.lat !== null && claim.lng !== null;
     const decision = decide(p, observation, counts, {
       duplicatePhoto: duplicate,
@@ -120,7 +126,7 @@ export async function verifyClaim(meta: MetaClient, store: Store, claimId: strin
 
     const check = await store.addCheck({
       claim_id: claim.id, decision, observation, counts, boxes,
-      models: { segmentation: meta.canSegment ? MODELS.sam : `count estimated by ${meta.reasoningModel}`, reasoning: meta.reasoningModel, calls, ms: Date.now() - t0 },
+      models: { segmentation: meta.canSegment ? MODELS.sam : `count estimated by ${meta.reasoningModel}`, reasoning: meta.reasoningModel, calls, ms: Date.now() - t0, trace },
     });
     let credit: LedgerEntry | null = null;
     if (decision.outcome === "consistent" && decision.reward > 0) {
@@ -131,6 +137,8 @@ export async function verifyClaim(meta: MetaClient, store: Store, claimId: strin
   } catch (e) {
     await store.updateClaim(claim.id, { status: "collecting" });
     throw e;
+  } finally {
+    meta.onCall = previousOnCall;
   }
 }
 

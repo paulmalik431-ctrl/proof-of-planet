@@ -109,6 +109,28 @@ describe("WhatsApp agent", () => {
     expect(await store.balance(store.claims[0].account_id)).toBe(100);
   });
 
+  test("a cropped or recompressed image is rejected on a second claim", async () => {
+    const turns = () => [
+      { tools: [["start_action", { action: "tree_planting" }]] as [string, Record<string, unknown>][] },
+      { text: "photo?" }, { text: "location?" },
+      { tools: [["verify_claim", {}]] as [string, Record<string, unknown>][] }, { text: "done" },
+    ];
+    const { deps, store } = setup({ sam: { sapling: 1 }, observation: YES_TREE, agent: [...turns(), ...turns()] });
+    const gray = Uint8Array.from({ length: 64 * 64 }, (_, i) => Math.round(128 + 45 * Math.sin((i % 64) / 10) + 30 * Math.cos(Math.floor(i / 64) / 12)));
+    deps.decodeImage = () => ({ gray, width: 64, height: 64 });
+    await handle(deps, msg({ text: "yes" }));
+    for (const seed of [9, 11]) {
+      await handle(deps, msg({ text: "tree" }));
+      await handle(deps, msg({ kind: "image", image: { bytes: png(seed), mime: "image/png" } }));
+      await handle(deps, msg({ kind: "location", location: { lat: 1, lng: 1 } }));
+    }
+    const photos = store.evidence.filter((e) => e.kind === "photo");
+    expect(photos[0].sha256).not.toBe(photos[1].sha256);
+    expect(photos[0].phash).toBe(photos[1].phash);
+    expect(store.claims.map((c) => c.status)).toEqual(["consistent", "contradicted"]);
+    expect(await store.balance(store.claims[0].account_id)).toBe(100);
+  });
+
   test("webhook retries are ignored", async () => {
     const { deps } = setup({ sam: {}, observation: {}, agent: [] });
     const m = msg({ text: "hi" });

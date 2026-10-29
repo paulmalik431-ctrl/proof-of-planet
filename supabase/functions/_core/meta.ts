@@ -43,10 +43,18 @@ export interface ToolDef {
 
 type Fetch = typeof fetch;
 
+/** Safe receipt metadata for a model API call; never includes prompt, image, or credentials. */
+export interface ModelCallTrace {
+  model: string;
+  endpoint: string;
+  ms: number;
+  ok: boolean;
+}
+
 export class MetaClient {
   private readonly fetch: Fetch;
   /** Every call is reported here (model, latency, ok) so runs can be audited and costed. */
-  onCall?: (e: { model: string; endpoint: string; ms: number; ok: boolean }) => void;
+  onCall?: (e: ModelCallTrace) => void;
 
   /** Chat provider in use; SAM 3.1, voice and image always use the Meta Model API. */
   readonly chatProvider: ChatProvider;
@@ -163,7 +171,9 @@ export class MetaClient {
     }), { "Content-Type": "application/json", Accept: "text/event-stream" });
     const raw = await res.text();
     if ((res.headers.get("content-type") ?? "").includes("event-stream") || /^(data|event):/m.test(raw.slice(0, 200))) {
-      return collectSseText(raw);
+      const text = collectSseText(raw);
+      if (!text) console.log("sam_sse_empty", JSON.stringify({ prompt, content_type: res.headers.get("content-type"), raw: raw.slice(0, 1500) }));
+      return text;
     }
     const j = JSON.parse(raw);
     return j.output_text ?? (j.output ?? [])
