@@ -45,7 +45,8 @@
   <p class="note">The artwork is AI art by Meta's Muse Image: it is not evidence and shows no numbers. Every figure on the card comes from the verified record and the <a href="ledger.html">public ledger</a>. <b>Every ECOIN is minted by a verified climate action.</b></p>
 </main>
 <script type="module">
-import { nav, el, photoUrl, SUPABASE_URL } from "./app.js";
+import { nav, el, photoUrl } from "./app.js";
+import { SUPABASE_URL } from "./config.js";
 document.getElementById("nav").replaceWith(nav());
 const q = new URLSearchParams(location.search);
 const key = q.get("claim") ? "claim" : "trade";
