@@ -1,3 +1,13 @@
+# Status — Nov 2, 2026 (Claude)
+
+- **Live:** agentic photo scout (`_core/scout.ts`). A photo with no context is identified by Muse Spark; rules route it. Verified live:
+  cow dung photo → "manure / compost / biogas for farmers, compost makers, biogas plants — how many kg?"; street litter → cleanup claim opened
+  automatically with the before photo. Never lists, prices or pays.
+- New Loop material `cow_dung`. Demo page: 3-step guide + openly licensed sample photos (cow dung, cans, litter).
+- UI: removed stale overlapping styles and half-applied dark mode (unreadable text); brighter muted text, min font sizes; versioned CSS links.
+- Tests: 79 pass (`bun test tests/`).
+- Still open: real end-to-end trade (bid → escrow → weighed intake → payout), WhatsApp connection, Muse Spark Open as main agent, video/submission.
+
 # Status — Oct 29, 2026
 
 ## Shipped
