@@ -94,7 +94,11 @@ export async function sendText(c: WaConfig, to: string, body: string): Promise<v
     headers: { Authorization: `Bearer ${c.token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body: body.slice(0, 4096), preview_url: true } }),
   });
-  if (!res.ok) throw new Error(`WhatsApp send failed (${res.status})`);
+  if (!res.ok) {
+    // Keep Meta's reason (e.g. 131030 "recipient not in allowed list") so failures are diagnosable; never the token.
+    const detail = await res.text().then((t) => t.slice(0, 300)).catch(() => "");
+    throw new Error(`WhatsApp send failed (${res.status}) ${detail}`);
+  }
 }
 
 /** Blue ticks, so the person knows ECO is working on it. */
