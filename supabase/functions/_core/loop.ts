@@ -11,7 +11,7 @@ import { countObjects, parseSamOutput } from "./sam.ts";
 
 export type MaterialId =
   | "rice_husk" | "sawdust" | "maize_cobs" | "coffee_pulp" | "used_cooking_oil" | "food_waste"
-  | "pet_bottles" | "plastic_jerrycans" | "cans" | "cardboard" | "e_waste";
+  | "pet_bottles" | "plastic_jerrycans" | "cans" | "cardboard" | "e_waste" | "cow_dung";
 export type Grade = "A" | "B" | "C";
 export type Unit = "kg" | "items" | "litres";
 
@@ -38,6 +38,7 @@ export const MATERIALS: Record<MaterialId, Material> = {
   cans: { id: "cans", title: "Aluminium cans", unit: "items", sam: "drink can", counts: "items", becomes: ["recycled aluminium"], buyers: ["scrap metal recyclers"], quality: "aluminium only, empty" },
   cardboard: { id: "cardboard", title: "Cardboard", unit: "kg", sam: "cardboard box", counts: "items", becomes: ["recycled paper"], buyers: ["paper recyclers"], quality: "dry, flattened, no wax coating" },
   e_waste: { id: "e_waste", title: "E-waste (phones, chargers, small electronics)", unit: "items", sam: "electronic device", counts: "items", becomes: ["recovered metals and parts"], buyers: ["licensed e-waste recyclers"], quality: "intact, batteries handled safely" },
+  cow_dung: { id: "cow_dung", title: "Cow dung", unit: "kg", sam: "sack", counts: "sacks", becomes: ["organic manure", "compost and vermicompost", "biogas"], buyers: ["farmers", "compost makers", "biogas plants"], quality: "fresh or dried, free of plastic, stones and soil" },
 };
 
 const GRADE_RANK: Record<Grade, number> = { A: 0, B: 1, C: 2 };

@@ -7,6 +7,7 @@ import { safeDHash, type ImageDecoder } from "./phash.ts";
 import { nextMissingPhoto, PROTOCOLS, STARTABLE } from "./protocols.ts";
 import { sha256Hex } from "./ledger.ts";
 import { MATERIALS } from "./loop.ts";
+import { adviseFromScout, scoutPhoto } from "./scout.ts";
 import type { Account, Session, Store } from "./store.ts";
 import { type Ctx, enterCode, runTool, state, toolsFor } from "./tools.ts";
 
@@ -96,6 +97,8 @@ function welcome(deps: AgentDeps, a: Account): string {
     "*Trade* — sell waste to businesses that turn it into value on *Loop* (rice husk → briquettes, jerrycans → reuse or recycling, bottles → recyclers), paid through escrow.",
     "*Spend* — pay in shops with *Glance*: just your phone number and a WhatsApp code.",
     "",
+    "📷 *Not sure where to start? Just send a photo.* Meta AI will tell you what it is and what you can earn or sell.",
+    "",
     `What did you do for the climate today? How it works: ${deps.publicUrl}`,
   ].join("\n");
 }
@@ -132,7 +135,7 @@ async function fileInbound(c: Ctx, msg: Inbound): Promise<string> {
       return `[sent a photo — filed as the lot photo for the ${MATERIALS[listing.material].title} listing]${caption}`;
     }
     await store.addEvidence({ claim_id: null, account_id: account.id, kind: "photo", role: null, path, sha256: sha, phash, lat: null, lng: null, text: null });
-    return `[sent a photo — kept aside (it may be a new action, a lot to sell, or a delivery photo for a trade)]${caption}`;
+    return `[sent a photo — ${await scout(c, path, msg.image.caption ?? "")}]${caption}`;
   }
 
   if (msg.kind === "location" && msg.location) {
@@ -159,6 +162,25 @@ async function fileInbound(c: Ctx, msg: Inbound): Promise<string> {
   return "[sent a message type ECO can't read — ask for text, a photo or a location]";
 }
 
+/** A photo with no open claim or listing: Muse Spark says what it shows, fixed rules pick the next step. */
+async function scout(c: Ctx, path: string, caption: string): Promise<string> {
+  const { store, meta } = c.deps;
+  const delivering = (await store.tradesOf(c.account.id)).find((t) => t.seller === c.account.id && t.status === "escrowed");
+  if (delivering) return `kept aside, likely the delivery photo for trade #${delivering.id.slice(0, 6)}`;
+  if (c.session.verifications_today >= c.deps.limits.verificationsPerDay) return "kept aside (daily photo-check limit reached; ask what it shows)";
+  try {
+    c.session.verifications_today++;
+    const obs = await scoutPhoto(meta, await store.photoDataUrl(path), caption);
+    const bids = obs.material !== "none" && obs.material !== "other" ? (await store.openDemands(obs.material)).length : 0;
+    const advice = adviseFromScout(obs, () => bids);
+    c.deps.log?.("scout", { outcome: advice.outcome, category: obs.category, action: obs.action, material: obs.material });
+    return `Meta AI looked at it: ${obs.notes || obs.category}. Scout result: ${advice.outcome}. ${advice.message}`;
+  } catch (e) {
+    c.deps.log?.("scout_error", String(e));
+    return "kept aside (it may be a new action, a lot to sell, or a delivery photo for a trade; ask what it shows)";
+  }
+}
+
 function systemPrompt(s: unknown, roles: string[]): string {
   return `You are ECO, the WhatsApp agent of ECO · Proof of Planet: people earn ECOIN for verified climate action, trade recyclables, and spend ECOIN in shops. Anywhere in the world.
 Reply in the language the person writes in. WhatsApp style: under 70 words, warm, plain, *bold* allowed, no headings. Use short trade ids like #a1b2c3.
@@ -170,6 +192,7 @@ TRADE (Loop) — waste-to-value matching. Streams: ${Object.values(MATERIALS).ma
 - Seller: sell_waste → tell them the one-time code to write on paper in the photo → ask for one photo of the whole lot with the code, and the pickup location → publish_listing (Meta AI identifies and grades it; the best buyer bid wins — you never set prices). After delivering: a delivery photo, then mark_delivered.
 - Buyers are value-adders (briquette makers, composters, recyclers…): buy_waste posts their bid, accept_offer locks ECOIN in escrow, confirm_delivery records what they WEIGHED and accepted (they pay only for that), dispute_trade if nothing usable arrived (AI recommends, an ECO reviewer decides).
 SPEND (Glance): shops use charge_customer then enter_code; the customer just reads the code ECO sent them. Face pay is coming; today it's the WhatsApp code.
+PHOTOS WITH NO CONTEXT: the user message carries a "Scout result" from Meta AI. Follow it: start_action → call start_action now; offer_to_sell → explain the value chain and buyers in one line and ask how much they have; advise_only/rejected → explain kindly what would work. Never list, price or pay from a scout result alone.
 Someone who says they are a business or shop → register_business / register_shop with their name.
 
 Rules: you never move ECOIN yourself and never promise amounts; only the tools do, by fixed rules. Never ask for ID, card numbers or passwords. Off-topic: one line, then steer back.
