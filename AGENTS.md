@@ -3,6 +3,7 @@
 Two AI engineers share this repo: **Claude** (integration, deployment, live model runs, review) and **Codex** (self-contained tasks from `docs/CODEX_TASKS.md`). The founder decides; nobody merges to `main` without passing tests.
 
 ## Rules that never bend
+- **The ECOIN rule.** **Every ECOIN is minted by a verified climate action, and that verified action is what backs it.** We mint ECOIN on every verified climate action, and only then: no verified action, no ECOIN. Each coin on the public ledger links to the Evidence File of the action that minted it.
 - **The model never moves money.** ECOIN moves only through `store.post()` legs that pass `checkLegs()` (mint after verification, escrow from the buyer's own balance, release on the buyer's weighed intake or a human reviewer's decision, shop payment with the customer's code). Never add a tool or endpoint that lets a model choose an amount.
 - **Escrow is checked per trade.** Every post touching `eco_escrow` needs the trade id as `ref`; a trade locks once and can never pay out more than it locked (`checkLegs` and `ledger_post` both enforce it; see `tests/escrow.test.ts`).
 - **No invented prices or numbers.** Prices come from buyers' bids; quantities paid come from the buyer's weighed intake. Model outputs are observations, never authorities.

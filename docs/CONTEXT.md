@@ -35,6 +35,7 @@ Five engines, one WhatsApp agent (Muse Spark 1.3 with tool calling, any language
 Business model: fees, not token price — 2% marketplace + 1% escrow on Loop, 1% on Glance payments, verification fees, app revenue.
 
 ## Decisions already made (don't relitigate without the founder)
+- **The ECOIN rule (founder, Nov 2 — categorical):** **Every ECOIN is minted by a verified climate action, and that verified action is what backs it.** We mint ECOIN on every verified climate action, and only then: no verified action, no ECOIN. Each coin on the public ledger links to the Evidence File of the action that minted it. Never describe anything else (fees, the Reserve, ads, deposits) as what backs ECOIN; the Reserve is a fee-funded buffer, not the backing.
 - The model can look, talk and choose tools; **only rules move money** (`checkLegs` in TS and `ledger_post` in SQL, identical). Escrow is enforced **per trade** (K0).
 - **No invented numbers**: prices from bids, paid quantities from the buyer's scale, rewards from the protocol.
 - Failures hold or ask; they never pay. Unclear evidence → "needs better evidence", never an accusation.

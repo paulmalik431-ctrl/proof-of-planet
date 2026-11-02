@@ -9,6 +9,10 @@ Built solo for the **Meta Global AI Developer Hackathon** (Startup track, theme 
 
 ---
 
+## The ECOIN rule
+
+**Every ECOIN is minted by a verified climate action, and that verified action is what backs it.** We mint ECOIN on every verified climate action, and only then: no verified action, no ECOIN. Each coin on the public ledger links to the Evidence File of the action that minted it. (Business test deposits in this hackathon build are labelled demo-only on the ledger and are not ECOIN backing.)
+
 ## The problem
 
 Climate action and payments are broken for most people:
