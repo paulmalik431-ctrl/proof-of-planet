@@ -50,7 +50,8 @@ export async function scoutPhoto(meta: MetaClient, photoDataUrl: string, caption
   const o = await meta.chatJSON<Partial<ScoutObservation>>({
     system: `You look at one photo sent to ECO, a climate-action and waste-to-value service. Say only what the photo shows.
 category: "climate_action" if it shows a climate action just done (${STARTABLE.map((id) => `${id}: ${PROTOCOLS[id].title}`).join("; ")});
-"waste_lot" if it shows waste or by-products someone could sell to a business that turns them into value;
+Litter or rubbish lying around a public place (street, beach, river bank, market) is climate_action with action "cleanup": it is the BEFORE photo of a cleanup.
+"waste_lot" if it shows sorted or collected waste or by-products someone could sell to a business that turns them into value;
 "not_relevant" for anything else (selfies, documents, screenshots, food on a plate…); "unclear" if you can't tell.
 action: the matching action id, or "none". material: the matching waste id (${Object.values(MATERIALS).map((m) => `${m.id} = ${m.title}`).join("; ")}),
 "other" for a different useful waste (then name it in other_material, e.g. "cow dung", "coconut husks", "scrap iron"), or "none".
