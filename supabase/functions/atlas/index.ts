@@ -30,7 +30,8 @@ Deno.serve(async (req) => {
   if (!cells?.length) return json({ brief: null, cells: [], stats });
 
   try {
-    const meta = clientFromEnv((k) => Deno.env.get(k));
+    // Atlas runs on Muse Spark Open (Meta open weights, via Baseten) whenever that key is set.
+    const meta = clientFromEnv((k) => (k === "CHAT_PROVIDER" && Deno.env.get("BASETEN_API_KEY") ? "baseten" : Deno.env.get(k)));
     const brief = await meta.chatJSON({
       system: `You are Atlas, ECO's climate-intelligence analyst. Write a brief for climate funders and impact investors from ECO's verified data.
 Use ONLY the numbers given. Each cell is ~5 km: verified actions, trees, trees confirmed alive after 30 days, cleanups, recycling, claims held back by checks, integrity (share of checked claims that passed), ECOIN paid, recyclable units traded.
@@ -40,8 +41,9 @@ risks: up to 3 (e.g. low integrity, low survival, thin data). data_gaps: up to 3
       name: "atlas_brief",
       schema: SCHEMA,
     });
-    const { data: saved } = await db.from("briefs").insert({ kind: "atlas", body: brief }).select("created_at").single();
-    return json({ brief, generated_at: saved?.created_at ?? new Date().toISOString(), cells, stats });
+    const body = { ...(brief as Record<string, unknown>), model: meta.reasoningModel };
+    const { data: saved } = await db.from("briefs").insert({ kind: "atlas", body }).select("created_at").single();
+    return json({ brief: body, generated_at: saved?.created_at ?? new Date().toISOString(), cells, stats });
   } catch (e) {
     console.error("atlas brief failed", String(e));
     return json({ brief: last?.body ?? null, generated_at: last?.created_at ?? null, cells, stats });
