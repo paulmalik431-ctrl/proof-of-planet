@@ -17,7 +17,7 @@ jobs:
       - uses: supabase/setup-cli@v1
         with: { version: latest }
       - run: supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
-      - run: supabase db push
+      - run: supabase db push --linked
       - run: |
           for f in whatsapp simulate atlas intake card wa-setup; do
             supabase functions deploy $f --no-verify-jwt --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
