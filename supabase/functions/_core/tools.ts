@@ -195,6 +195,7 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
           ecoin_minted: r.credit?.amount ?? 0, ledger_entry: r.credit ? `#${r.credit.seq}` : null,
           what_the_ai_saw: r.check.observation.notes, better_evidence: r.check.observation.better_evidence,
           evidence_file: link(c, "claim.html", r.claim.id),
+          proof_card: r.check.decision.outcome === "consistent" ? link(c, "card.html", r.claim.id).replace("?id=", "?claim=") : undefined,
           next: r.claim.protocol === "tree_planting" && r.check.decision.outcome === "consistent" ? "Remind them: a survival photo from the same spot after 30 days earns 400 more." : undefined,
         };
       } catch (e) {
@@ -493,7 +494,7 @@ export async function settleIntake(deps: Deps, stale: Trade, intake: Intake, now
   await closeTrade(store, t, "released", `Buyer weighed and accepted ${accepted} ${unit}${intake.grade ? ` (grade ${intake.grade})` : ""} via ${intake.via}. Seller paid ${split.net}; fees ${split.fee} (reserve ${split.reserve})${refunded ? `; ${refunded} returned to buyer` : ""}.`, now);
   const msg = `✅ Loop #${short(t.id)}: the buyer weighed and accepted ${accepted} ${unit}. +${split.net} ECOIN (after ${split.fee} ECOIN fees, ${split.reserve} of it to the ECO Reserve).\n${deps.publicUrl}/trade.html?id=${t.id}`;
   if (deps.notify) await deps.notify(t.seller, msg); else await store.enqueue(t.seller, msg);
-  return { accepted_quantity: accepted, seller_received: split.net, fees: split.fee, to_reserve: split.reserve, returned_to_buyer: refunded, receipt: `${deps.publicUrl}/trade.html?id=${t.id}` };
+  return { accepted_quantity: accepted, seller_received: split.net, fees: split.fee, to_reserve: split.reserve, returned_to_buyer: refunded, receipt: `${deps.publicUrl}/trade.html?id=${t.id}`, proof_card: `${deps.publicUrl}/card.html?trade=${t.id}` };
 }
 
 async function createTrade(c: Ctx, l: Listing, d: Demand, quantity: number, distance_km: number | null, price: number, tellBuyer: boolean) {

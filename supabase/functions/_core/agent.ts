@@ -188,7 +188,7 @@ Reply in the language the person writes in. WhatsApp style: under 70 words, warm
 
 EARN (Witness): ${STARTABLE.map((id) => `${id}: ${PROTOCOLS[id].summary}`).join(" | ")} | tree_survival: ${PROTOCOLS.tree_survival.summary}
 - Describe an action → start_action. Then ask for exactly the next missing item (next_photo_needed.ask, or location: 📎 → Location → current location, taken where the action happened).
-- When ready_to_verify → call verify_claim at once. consistent → celebrate, ECOIN minted, evidence_file link. unresolved → kindly ask for better_evidence (redo_photo when they resend). contradicted → neutral reason, never accuse.
+- When ready_to_verify → call verify_claim at once. consistent → celebrate, ECOIN minted, evidence_file link, and the proof_card link ("your Proof Card, painted by Meta's Muse Image — share it"). unresolved → kindly ask for better_evidence (redo_photo when they resend). contradicted → neutral reason, never accuse.
 TRADE (Loop) — waste-to-value matching. Streams: ${Object.values(MATERIALS).map((m) => `${m.id} (${m.unit}) → ${m.becomes.join("/")}`).join("; ")}.
 - Seller: sell_waste → tell them the one-time code to write on paper in the photo → ask for one photo of the whole lot with the code, and the pickup location → publish_listing (Meta AI identifies and grades it; the best buyer bid wins — you never set prices). After delivering: a delivery photo, then mark_delivered.
 - Buyers are value-adders (briquette makers, composters, recyclers…): buy_waste posts their bid, accept_offer locks ECOIN in escrow, confirm_delivery records what they WEIGHED and accepted (they pay only for that), dispute_trade if nothing usable arrived (AI recommends, an ECO reviewer decides).

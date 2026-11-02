@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proof Card — ECO · Proof of Planet</title>
+<meta name="description" content="A verified climate action on ECO · Proof of Planet. Every ECOIN is minted by a verified climate action.">
+<meta property="og:title" content="Proof Card — ECO · Proof of Planet">
+<meta property="og:description" content="Verified climate action, painted by Meta's Muse Image. The figures come from the public ledger.">
+<link rel="stylesheet" href="style.css?v=20261102">
+<style>
+  body.cardpage { background: #0e1a14; color: #f4f1e8; }
+  .card-wrap { max-width: 520px; margin: 28px auto 40px; padding: 0 16px; }
+  .proof { position: relative; aspect-ratio: 4 / 5; border-radius: 18px; overflow: hidden; background: #1d3327; box-shadow: 0 18px 50px #0008; }
+  .proof img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .proof .shade { position: absolute; inset: 0; background: linear-gradient(180deg, #0000 38%, #08120dcc 66%, #08120df2 100%); }
+  .proof .top { position: absolute; top: 14px; left: 14px; right: 14px; display: flex; justify-content: space-between; gap: 8px; }
+  .pill { background: #0b1510cc; color: #f4f1e8; border: 1px solid #ffffff33; border-radius: 999px; padding: 5px 11px; font: 600 12px "IBM Plex Sans", sans-serif; backdrop-filter: blur(4px); }
+  .pill.ai { color: #ffe08a; }
+  .proof .facts { position: absolute; left: 20px; right: 20px; bottom: 20px; }
+  .proof h1 { font: 700 clamp(26px, 7vw, 36px)/1.08 "Archivo Narrow", sans-serif; margin: 0 0 10px; color: #fff; }
+  .proof ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; font-size: 15px; color: #e6eee6; }
+  .proof li::before { content: "✓ "; color: #b9f06a; font-weight: 700; }
+  .proof .rule { margin-top: 12px; font: 600 12px "IBM Plex Mono", monospace; color: #b9f06a; letter-spacing: .02em; }
+  .painting { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; color: #cfe0cf; font-size: 15px; }
+  .painting i { display: block; width: 46px; height: 46px; margin: 0 auto 12px; border-radius: 50%; border: 3px solid #b9f06a44; border-top-color: #b9f06a; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .actions .btn { background: #b9f06a; border-color: #b9f06a; color: #0e1a14; }
+  .actions .btn.ghost { background: transparent; color: #f4f1e8; border-color: #ffffff55; }
+  .note { margin-top: 14px; font-size: 13px; color: #b7c6b8; }
+  .note a { color: #b9f06a; }
+  .cardpage nav.top { background: #0e1a14; border-color: #ffffff1f; }
+  .cardpage nav.top a, .cardpage nav.top .brand { color: #f4f1e8; }
+</style>
+</head>
+<body class="cardpage">
+<div id="nav"></div>
+<main class="card-wrap">
+  <div class="proof" id="proof"><div class="painting"><div><i></i>Meta's Muse Image is painting this Proof Card…<br><span class="small">about 15 seconds, only the first time</span></div></div></div>
+  <div class="actions" id="actions" hidden>
+    <a class="btn" id="share-x" target="_blank" rel="noopener">Share on X</a>
+    <a class="btn ghost" id="share-wa" target="_blank" rel="noopener">Share on WhatsApp</a>
+    <a class="btn ghost" id="evidence">See the evidence</a>
+  </div>
+  <p class="note">The artwork is AI art by Meta's Muse Image: it is not evidence and shows no numbers. Every figure on the card comes from the verified record and the <a href="ledger.html">public ledger</a>. <b>Every ECOIN is minted by a verified climate action.</b></p>
+</main>
+<script type="module">
+import { nav, el, photoUrl, SUPABASE_URL } from "./app.js";
+document.getElementById("nav").replaceWith(nav());
+const q = new URLSearchParams(location.search);
+const key = q.get("claim") ? "claim" : "trade";
+const id = q.get(key) ?? "";
+const proof = document.getElementById("proof");
+const fail = (msg) => { proof.innerHTML = ""; proof.append(el("div", { class: "painting" }, msg)); };
+if (!/^[0-9a-f-]{36}$/i.test(id)) fail("This link has no claim or trade id.");
+else {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/card?${key}=${id}`).then((x) => x.json());
+    if (r.error) fail(r.error);
+    else {
+      proof.innerHTML = "";
+      if (r.path) proof.append(el("img", { src: photoUrl(r.path), alt: "AI artwork inspired by this verified climate action (Muse Image)" }));
+      proof.append(el("div", { class: "shade" }),
+        el("div", { class: "top" }, el("span", { class: "pill" }, "ECO · Proof of Planet"), el("span", { class: "pill ai" }, "AI art · Muse Image")),
+        el("div", { class: "facts" }, el("h1", {}, r.facts.title), el("ul", {}, r.facts.lines.map((l) => el("li", {}, l))),
+          el("div", { class: "rule" }, "Every ECOIN is minted by a verified climate action.")));
+      const text = `${r.facts.title}. ${r.facts.lines[0]}. Verified with Meta AI on ECO · Proof of Planet. #BuildWithMeta`;
+      document.getElementById("share-x").href = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(location.href)}`;
+      document.getElementById("share-wa").href = `https://wa.me/?text=${encodeURIComponent(`${text} ${location.href}`)}`;
+      document.getElementById("evidence").href = r.facts.evidence;
+      document.getElementById("actions").hidden = false;
+    }
+  } catch (e) { fail(`Couldn't load this card (${e.message}).`); }
+}
+</script>
+</body>
+</html>
