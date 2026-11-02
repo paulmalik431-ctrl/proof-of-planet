@@ -14,3 +14,6 @@ verify_jwt = false   # the buyer proves they're the buyer with the one-time inta
 
 [functions.card]
 verify_jwt = false   # public read; one Muse Image card per verified outcome, daily cap CARD_DAILY_CAP
+
+[functions.wa-setup]
+verify_jwt = false   # idempotent: only (re)subscribes our own app to our own WhatsApp account; returns status, never secrets
