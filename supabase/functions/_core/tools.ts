@@ -12,7 +12,7 @@ import type { AgentDeps as Deps } from "./agent.ts";
 import type { Account, Claim, Role, Session, Store } from "./store.ts";
 import type { AgentDeps } from "./agent.ts";
 
-export interface Ctx { deps: AgentDeps; account: Account; session: Session; now: Date }
+export interface Ctx { deps: AgentDeps; account: Account; session: Session; now: Date; /** Fixed messages sent after the agent's reply (proof links). */ after?: string[] }
 
 const fn = (name: string, description: string, properties: Record<string, unknown> = {}, required: string[] = []): ToolDef =>
   ({ type: "function", function: { name, description, parameters: { type: "object", properties, required } } });
@@ -65,6 +65,20 @@ export function toolsFor(roles: Role[]): ToolDef[] {
 }
 
 export const short = (id: string) => id.slice(0, 6);
+
+/** The proof links sent on WhatsApp after every verified outcome — fixed text, never left to the model. */
+export function proofLinks(publicUrl: string, subject: { claim?: string; trade?: string }, accountId: string): string {
+  const page = subject.claim ? `${publicUrl}/claim.html?id=${subject.claim}` : `${publicUrl}/trade.html?id=${subject.trade}`;
+  const card = subject.claim ? `${publicUrl}/card.html?claim=${subject.claim}` : `${publicUrl}/card.html?trade=${subject.trade}`;
+  return [
+    "📎 *Your proof — open, check, share:*",
+    `🔎 ${subject.claim ? "Evidence File (photos + what Meta AI saw)" : "Trade record (escrow, count, payout)"}: ${page}`,
+    `🎨 Proof Card, painted by Meta's Muse Image: ${card}`,
+    `📒 Your wallet on the public ledger — tap *Verify the whole chain*: ${publicUrl}/ledger.html?account=${accountId}`,
+    `🗺️ Atlas, verified climate action on the map: ${publicUrl}/atlas.html`,
+  ].join("\n");
+}
+const queueAfter = (c: Ctx, text: string) => { (c.after ??= []).push(text); };
 const link = (c: Ctx, page: string, id: string) => `${c.deps.publicUrl}/${page}?id=${id}`;
 
 async function notify(c: Ctx, accountId: string, text: string) {
@@ -194,6 +208,7 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
       try {
         const r = await verifyClaim(meta, store, s.open_claim.claim_id, now);
         if (r.check.decision.outcome !== "unresolved") session.open_claim_id = null;
+        if (r.check.decision.outcome === "consistent") queueAfter(c, proofLinks(c.deps.publicUrl, { claim: r.claim.id }, account.id));
         return {
           outcome: r.check.decision.outcome, reasons: r.check.decision.reasons,
           ecoin_minted: r.credit?.amount ?? 0, ledger_entry: r.credit ? `#${r.credit.seq}` : null,
@@ -291,7 +306,7 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
     // ── common ──
     case "wallet": {
       const entries = await store.ledgerOf(account.id, 5);
-      return { balance_ecoin: await store.balance(account.id), recent: entries.map((e) => ({ seq: e.seq, amount: e.amount, kind: e.kind, memo: e.memo })), wallet_page: `${c.deps.publicUrl}/ledger.html?account=${account.id}` };
+      return { balance_ecoin: await store.balance(account.id), recent: entries.map((e) => ({ seq: e.seq, amount: e.amount, kind: e.kind, memo: e.memo })), wallet_page: `${c.deps.publicUrl}/ledger.html?account=${account.id}`, atlas: `${c.deps.publicUrl}/atlas.html` };
     }
     case "register_business":
     case "register_shop": {
@@ -352,7 +367,9 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
       const t = await findTrade(c, String(a.trade_id));
       if (!t || t.buyer !== account.id) return { error: "Trade not found." };
       const g = ["A", "B", "C"].includes(String(a.grade)) ? (String(a.grade) as Grade) : null;
-      return settleIntake(c.deps, t, { accepted_quantity: Number(a.accepted_quantity), grade: g, note: String(a.note ?? "").slice(0, 300), by: account.id, via: "whatsapp", at: now.toISOString() }, now);
+      const r = await settleIntake(c.deps, t, { accepted_quantity: Number(a.accepted_quantity), grade: g, note: String(a.note ?? "").slice(0, 300), by: account.id, via: "whatsapp", at: now.toISOString() }, now);
+      if (!r.error) queueAfter(c, proofLinks(c.deps.publicUrl, { trade: t.id }, account.id));
+      return r;
     }
     case "dispute_trade": {
       const t = await findTrade(c, String(a.trade_id));
@@ -432,7 +449,8 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
         return { error: `Adoption not paid: ${String(e).slice(0, 120)}` };
       }
       const card = `${c.deps.publicUrl}/card.html?claim=${tree.id}`;
-      await notify(c, tree.account_id, `🌳 Your tree #${short(tree.id)} was adopted by *${account.name ?? "a company"}*! You received *${s.net} ECOIN* (fee ${s.fee}). Proof Card: ${card}`);
+      await notify(c, tree.account_id, `🌳 Your tree #${short(tree.id)} was adopted by *${account.name ?? "a company"}*! You received *${s.net} ECOIN* (fee ${s.fee}).\n\n${proofLinks(c.deps.publicUrl, { claim: tree.id }, tree.account_id)}`);
+      queueAfter(c, proofLinks(c.deps.publicUrl, { claim: tree.id }, account.id));
       return { adopted: short(tree.id), paid: ADOPTION.price, planter_received: s.net, fee: s.fee, to_reserve: s.reserve, evidence_file: link(c, "claim.html", tree.id), proof_card: card };
     }
 
@@ -561,7 +579,7 @@ export async function settleIntake(deps: Deps, stale: Trade, intake: Intake, now
   await store.updateTrade(t.id, { intake: { ...intake, accepted_quantity: accepted } });
   const refunded = t.total - toSeller;
   await closeTrade(store, t, "released", `Buyer weighed and accepted ${accepted} ${unit}${intake.grade ? ` (grade ${intake.grade})` : ""} via ${intake.via}. Seller paid ${split.net}; fees ${split.fee} (reserve ${split.reserve})${refunded ? `; ${refunded} returned to buyer` : ""}.`, now);
-  const msg = `✅ Loop #${short(t.id)}: the buyer weighed and accepted ${accepted} ${unit}. +${split.net} ECOIN (after ${split.fee} ECOIN fees, ${split.reserve} of it to the ECO Reserve).\n${deps.publicUrl}/trade.html?id=${t.id}`;
+  const msg = `✅ Loop #${short(t.id)}: the buyer weighed and accepted ${accepted} ${unit}. +${split.net} ECOIN (after ${split.fee} ECOIN fees, ${split.reserve} of it to the ECO Reserve).\n\n${proofLinks(deps.publicUrl, { trade: t.id }, t.seller)}`;
   if (deps.notify) await deps.notify(t.seller, msg); else await store.enqueue(t.seller, msg);
   return { accepted_quantity: accepted, seller_received: split.net, fees: split.fee, to_reserve: split.reserve, returned_to_buyer: refunded, receipt: `${deps.publicUrl}/trade.html?id=${t.id}`, proof_card: `${deps.publicUrl}/card.html?trade=${t.id}` };
 }

@@ -40,7 +40,13 @@ describe("WhatsApp agent", () => {
     await handle(deps, msg({ text: "yes" }));
     expect(await handle(deps, msg({ text: "I planted a tree" }))).toEqual(["Great! Send a photo of the tree."]);
     await handle(deps, msg({ kind: "image", image: { bytes: png(1), mime: "image/png" } }));
-    expect(await handle(deps, msg({ kind: "location", location: { lat: -1.29, lng: 36.82 } }))).toEqual(["Verified! +100 ECOIN"]);
+    const verified = await handle(deps, msg({ kind: "location", location: { lat: -1.29, lng: 36.82 } }));
+    expect(verified[0]).toBe("Verified! +100 ECOIN");
+    // Fixed proof links follow every verified action: Evidence File, Proof Card, ledger, Atlas.
+    expect(verified[1]).toContain("/claim.html?id=");
+    expect(verified[1]).toContain("/card.html?claim=");
+    expect(verified[1]).toContain("Verify the whole chain");
+    expect(verified[1]).toContain("/atlas.html");
 
     const claim = store.claims[0];
     expect(claim.status).toBe("consistent");

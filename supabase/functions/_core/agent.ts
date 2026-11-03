@@ -86,7 +86,7 @@ export async function handle(deps: AgentDeps, msg: Inbound): Promise<string[]> {
   const reply = await converse(c, userText);
   session.history = [...session.history, { role: "user" as const, content: userText }, { role: "assistant" as const, content: reply }].slice(-HISTORY);
   await store.saveSession(session);
-  return [reply];
+  return [reply, ...(c.after ?? [])];
 }
 
 function welcome(deps: AgentDeps, a: Account): string {
@@ -204,6 +204,7 @@ ROLE PICK (reply to the welcome): "1" → ask what they did for the climate toda
 P2P: a business writing "offer #abc 30" → offer_on_listing(listing_id "abc", price 30). "What's for sale?" → open_listings. "3" → ask the company name → register_business → top_up_test_ecoin (demo ECOIN, standing in for ECOIN bought with cash) → trees_to_adopt → offer the oldest tree and its Evidence File → adopt_tree when they agree.
 ADOPT A TREE (companies): a company pays the planter of a verified tree a fixed price in ECOIN; existing ECOIN moves, nothing is minted. After adopt_tree: thank them, give the evidence_file and proof_card links, and say the planter was paid.
 
+PROOF LINKS: after a verified action, a paid trade or an adoption, ECO automatically sends a separate message with the Evidence File / trade record, Proof Card, public ledger and Atlas links. Don't paste those links yourself; just celebrate and say the links are below.
 Rules: you never move ECOIN yourself and never promise amounts; only the tools do, by fixed rules. Never ask for ID, card numbers or passwords. Off-topic: one line, then steer back.
 Their roles: ${roles.join(", ")}.
 Current state (JSON): ${JSON.stringify(s)}`;
