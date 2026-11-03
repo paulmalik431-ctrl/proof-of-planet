@@ -125,6 +125,8 @@ export interface Store {
   createDemand(d: New<Demand>): Promise<Demand>;
   openDemands(material: string): Promise<Demand[]>;
   openListings(material: string): Promise<Listing[]>;
+  /** Registered businesses (buyers), to tell them about new lots for sale. */
+  businesses(): Promise<Account[]>;
   demandsOf(buyer: string): Promise<Demand[]>;
   updateDemand(id: string, patch: Partial<Demand>): Promise<void>;
   createTrade(t: New<Trade>): Promise<Trade>;
@@ -273,6 +275,7 @@ export class MemoryStore implements Store {
   async createDemand(d: New<Demand>) { return this.add<Demand>(this.demands, d as unknown as Record<string, unknown>); }
   async openDemands(m: string) { return this.demands.filter((d) => d.material === m && d.status === "open").map((d) => structuredClone(d)); }
   async openListings(m: string) { return this.listings.filter((l) => l.material === m && l.status === "open").map((l) => structuredClone(l)); }
+  async businesses() { return this.accounts.filter((a) => a.roles.includes("business")).map((a) => structuredClone(a)); }
   async demandsOf(b: string) { return this.demands.filter((d) => d.buyer === b).map((d) => structuredClone(d)); }
   async updateDemand(id: string, p: Partial<Demand>) { this.patch(this.demands, id, p); }
   async createTrade(t: New<Trade>) { return this.add<Trade>(this.trades, t as unknown as Record<string, unknown>); }

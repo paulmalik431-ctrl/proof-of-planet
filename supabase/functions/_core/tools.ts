@@ -46,6 +46,8 @@ const BUSINESS: ToolDef[] = [
   fn("confirm_delivery", "Loop (business): record the weighed intake. Escrow pays the seller for the accepted quantity at your bid; any difference returns to you.", { trade_id: TRADE_ID, accepted_quantity: { type: "number", description: "weighed and accepted, in the material's unit" }, grade: GRADE, note: { type: "string" } }, ["trade_id", "accepted_quantity"]),
   fn("dispute_trade", "Loop (business): the delivery was missing or not as listed. Meta AI reviews the evidence; an ECO reviewer decides.", { trade_id: TRADE_ID, reason: { type: "string" } }, ["trade_id", "reason"]),
   fn("top_up_test_ecoin", "Demo only: give this business 5,000 test ECOIN (once), clearly labelled on the ledger."),
+  fn("open_listings", "P2P (business): every waste lot for sale right now, checked by Meta AI, with its photo page. No bid needed first."),
+  fn("offer_on_listing", "P2P (business): buy a listed lot at your price per unit. Your ECOIN is locked in escrow at once; you pay only for what you count and accept on delivery.", { listing_id: { type: "string", description: "listing id or its first characters" }, price: { type: "number", description: "ECOIN per unit (kg or item)" } }, ["listing_id", "price"]),
   fn("trees_to_adopt", "Tree adoption (company): verified trees waiting for an adopter, with their Evidence Files and the fixed adoption price."),
   fn("adopt_tree", "Tree adoption (company): adopt a verified tree. Pays the planter the fixed adoption price from this company's ECOIN; one adopter per tree.", { tree_id: { type: "string", description: "tree id or its first characters; omit for the oldest tree waiting" } }),
 ];
@@ -255,10 +257,11 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
       session.open_listing_id = null;
       const listed = (await store.listing(l.id))!;
       const offer = await proposeFromListing(c, listed);
+      const told = offer ? 0 : await announceListing(c, listed);
       return {
         outcome: "listed", grade: as.grade, counted: `${as.sam_count} ${m.counts}`, quantity: as.verified_quantity, unit: m.unit,
         what_the_ai_saw: as.observation.notes, listing_page: link(c, "listing.html", l.id),
-        match: offer ? `Best bid: ${offer.price} ECOIN per ${m.unit === "items" ? "item" : m.unit} from a buyer ${offer.distance_km ?? "?"} km away (trade #${short(offer.id)}, ${offer.total} ECOIN). You'll get a message when they pay into escrow.` : `No bid yet from ${m.buyers.join(", ")}. You'll get a message when one comes in.`,
+        match: offer ? `Best bid: ${offer.price} ECOIN per ${m.unit === "items" ? "item" : m.unit} from a buyer ${offer.distance_km ?? "?"} km away (trade #${short(offer.id)}, ${offer.total} ECOIN). You'll get a message when they pay into escrow.` : `No standing bid yet; ${told} buyer${told === 1 ? "" : "s"} on ECO can see your lot and its photo now and make an offer. You'll get a message when one pays into escrow.`,
       };
     }
     case "mark_delivered": {
@@ -367,6 +370,39 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
       if ((await store.ledgerOf(account.id, 1000)).some((e) => e.kind === "deposit")) return { error: "Test ECOIN was already given to this business." };
       const [e] = await store.post([{ account_id: account.id, amount: 5000, kind: "deposit" }], null, "Test deposit (demo only)");
       return { deposited: 5000, ledger_entry: `#${e.seq}` };
+    }
+
+    // ── P2P: buyers see what is uploaded and buy a lot directly; escrow as for any trade ──
+    case "open_listings": {
+      if (!account.roles.includes("business")) return { error: "Register as a business first (register_business)." };
+      const lots = (await Promise.all(Object.keys(MATERIALS).map((m) => store.openListings(m)))).flat().filter((l) => l.seller !== account.id);
+      return {
+        for_sale: lots.slice(-10).reverse().map((l) => ({ id: short(l.id), what: `${l.quantity} ${unitWord(l.unit)}${MATERIALS[l.material].title}`, grade: l.grade, seller_minimum: l.price || null, photo_page: link(c, "listing.html", l.id) })),
+        how_to_buy: "offer_on_listing with the id and your price per unit; ECOIN goes into escrow at once.",
+        note: lots.length ? undefined : "Nothing is for sale right now.",
+      };
+    }
+    case "offer_on_listing": {
+      if (!account.roles.includes("business")) return { error: "Register as a business first (register_business)." };
+      const want = String(a.listing_id ?? "").trim().replace(/^#/, "").toLowerCase();
+      if (want.length < 4) return { error: "Give the lot's id (at least 4 characters)." };
+      const l = (await Promise.all(Object.keys(MATERIALS).map((m) => store.openListings(m)))).flat().find((x) => x.id.startsWith(want));
+      if (!l) return { error: "That lot isn't for sale any more." };
+      if (l.seller === account.id) return { error: "You can't buy your own lot." };
+      const price = Math.round(Number(a.price));
+      if (!(price >= 1)) return { error: "Give a price of at least 1 ECOIN per unit." };
+      if (l.price && price < l.price) return { error: `The seller's minimum is ${l.price} ECOIN per ${l.unit === "items" ? "item" : l.unit}.` };
+      const total = price * l.quantity;
+      if ((await store.balance(account.id)) < total) return { error: `Buying all ${l.quantity} at ${price} needs ${total} ECOIN; balance ${await store.balance(account.id)}. In this demo, top_up_test_ecoin adds test ECOIN.` };
+      const d = await store.createDemand({ buyer: account.id, material: l.material, quantity: l.quantity, max_price: price, min_grade: "C", lat: session.last_location?.lat ?? null, lng: session.last_location?.lng ?? null, radius_km: 200, status: "filled" });
+      const t = await createTrade(c, l, d, l.quantity, null, price, false);
+      const r = await runTool(c, "accept_offer", { trade_id: t.id }) as Record<string, unknown>;
+      if (r.error) {
+        await store.updateTrade(t.id, { status: "declined", history: hist(t, "declined", "Escrow failed", now) });
+        await store.updateListing(l.id, { status: "open" });
+        return r;
+      }
+      return { bought: `${l.quantity} ${unitWord(l.unit)}${MATERIALS[l.material].title} at ${price} each`, trade: short(t.id), ...r };
     }
 
     // ── Tree adoption: existing ECOIN moves from a company to a planter at a fixed price. Never a mint. ──
@@ -542,6 +578,18 @@ async function createTrade(c: Ctx, l: Listing, d: Demand, quantity: number, dist
     await notify(c, d.buyer, `♻️ New Loop offer #${short(t.id)}: ${quantity} ${unitWord(l.unit)}${MATERIALS[l.material].title} (grade ${l.grade}, checked by Meta AI) from a seller ${distance_km ?? "?"} km away, at your bid of ${price} ECOIN = *${t.total} ECOIN* (you pay for what you weigh and accept).\nReply *accept ${short(t.id)}* to pay into escrow, or *decline ${short(t.id)}*.\n${link(c, "listing.html", l.id)}`);
   }
   return t;
+}
+
+/** P2P: tell every business (same sandbox/real side as the seller) that a checked lot is for sale, with its photo page. */
+async function announceListing(c: Ctx, l: Listing): Promise<number> {
+  const sandbox = (p: string) => p.startsWith("999");
+  const seller = c.account;
+  const buyers = (await c.deps.store.businesses()).filter((b) => b.id !== seller.id && b.consent_at && sandbox(b.phone) === sandbox(seller.phone));
+  const m = MATERIALS[l.material];
+  for (const b of buyers) {
+    await notify(c, b.id, `🆕 For sale on Loop: *${l.quantity} ${unitWord(l.unit)}${m.title}* (grade ${l.grade ?? "?"}, checked by Meta AI). It becomes ${m.becomes[0]}.\nSee the photo: ${link(c, "listing.html", l.id)}\nTo buy, reply *offer ${short(l.id)} <ECOIN per ${l.unit === "items" ? "item" : l.unit}>*. Your ECOIN is held in escrow; you pay only for what you count and accept.`);
+  }
+  return buyers.length;
 }
 
 async function proposeFromListing(c: Ctx, l: Listing) {

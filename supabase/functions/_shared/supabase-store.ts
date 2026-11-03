@@ -125,6 +125,7 @@ export class SupabaseStore implements Store {
   async createDemand(d: New<Demand>) { return this.ins<Demand>("demands", d, "create demand"); }
   async openDemands(m: string) { return must(await this.db.from("demands").select("*").eq("material", m).eq("status", "open").order("created_at"), "demands") as Demand[]; }
   async openListings(m: string) { return must(await this.db.from("listings").select("*").eq("material", m).eq("status", "open").order("created_at"), "listings") as Listing[]; }
+  async businesses() { return must(await this.db.from("accounts").select("*").contains("roles", ["business"]), "businesses") as Account[]; }
   async demandsOf(b: string) { return must(await this.db.from("demands").select("*").eq("buyer", b), "demands") as Demand[]; }
   async updateDemand(id: string, p: Partial<Demand>) { await this.upd("demands", id, p, "update demand"); }
   async createTrade(t: New<Trade>) { return this.ins<Trade>("trades", t, "create trade"); }
