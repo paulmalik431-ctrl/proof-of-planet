@@ -138,7 +138,7 @@ This whole repository: the agent and its tools, Witness, Loop, Glance, Atlas, th
 - **Face confirmation for Glance** through a certified provider: 1:1 match on the customer's own enrolment, no face database.
 - **Voice-note claims**: convert WhatsApp Opus to WAV, then Muse Voice Transcribe.
 - **More protocols:** clean cookstoves, solar installs, mangrove restoration.
-- **Carbon-credit incentives** for merchants who accept ECOIN.
+- **Climate incentives** for merchants who accept ECOIN.
 - **Verification-as-a-service** for funds and developers, with Atlas briefs per project.
 
 ## License
