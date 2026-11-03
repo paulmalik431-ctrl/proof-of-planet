@@ -12,6 +12,9 @@ verify_jwt = false   # public read; the brief is cached for 6 hours to bound cos
 [functions.intake]
 verify_jwt = false   # the buyer proves they're the buyer with the one-time intake code
 
+[functions.ghost-audit]
+verify_jwt = false   # public; one cached result per case, daily cap GHOST_DAILY_CAP; never touches the ledger
+
 [functions.card]
 verify_jwt = false   # public read; one Muse Image card per verified outcome, daily cap CARD_DAILY_CAP
 

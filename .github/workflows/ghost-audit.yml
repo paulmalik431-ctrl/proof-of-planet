@@ -1,0 +1,19 @@
+name: Ghost Audit
+on:
+  workflow_dispatch:
+permissions: { contents: write }
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun scripts/ghost-remote.ts
+      - name: Publish results
+        run: |
+          git config user.name "eco-ghost-audit"
+          git config user.email "actions@users.noreply.github.com"
+          git add evals/README.md evals/results.json
+          git diff --cached --quiet || (git commit -m "Ghost Audit results" && git pull --rebase && git push)

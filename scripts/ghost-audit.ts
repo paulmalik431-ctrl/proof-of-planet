@@ -10,6 +10,7 @@ import { MemoryStore } from "../supabase/functions/_core/store.ts";
 import { verifyClaim } from "../supabase/functions/_core/verify.ts";
 import { sha256Hex } from "../supabase/functions/_core/ledger.ts";
 import type { ProtocolId } from "../supabase/functions/_core/protocols.ts";
+import { FAKES } from "../supabase/functions/_core/ghost.ts";
 
 const ROOT = `${import.meta.dir}/../evals`;
 if (!process.env.MODEL_API_KEY && !process.env.BASETEN_API_KEY) throw new Error("Set MODEL_API_KEY and/or BASETEN_API_KEY");
@@ -20,16 +21,7 @@ meta.onCall = () => calls++;
 
 interface Case { id: string; kind: "fake" | "real"; protocol: ProtocolId; photos: Record<string, string>; expectPaid: boolean; note: string }
 
-const FAKES: Array<{ id: string; protocol: ProtocolId; prompts: Record<string, string>; note: string }> = [
-  { id: "ai-sapling-1", protocol: "tree_planting", prompts: { planting: "smartphone photo of a young tree sapling freshly planted in dark soil, daylight, slightly blurry, realistic" }, note: "Fully AI-generated planting photo" },
-  { id: "ai-sapling-2", protocol: "tree_planting", prompts: { planting: "a person's hands pressing soil around a newly planted mango seedling in a rural garden, phone camera photo" }, note: "AI-generated planting with hands" },
-  { id: "potted-plant", protocol: "tree_planting", prompts: { planting: "a small green plant in a plastic pot on a kitchen table indoors, phone photo" }, note: "Potted indoor plant passed off as planting" },
-  { id: "mature-tree", protocol: "tree_planting", prompts: { planting: "a large old tree in a city park, phone photo" }, note: "Existing mature tree, nothing planted" },
-  { id: "shop-shelf", protocol: "recycling", prompts: { items: "supermarket shelf full of new unopened plastic soda bottles and cans, phone photo" }, note: "New stock on a shop shelf, not collected waste" },
-  { id: "ai-recyclables", protocol: "recycling", prompts: { items: "used crushed plastic bottles and drink cans spread out on the ground for counting, phone photo" }, note: "AI-generated recyclables" },
-  { id: "cleanup-two-places", protocol: "cleanup", prompts: { before: "a roadside ditch full of plastic litter in a town, phone photo", after: "a clean empty beach with white sand, phone photo" }, note: "Before and after from different places" },
-  { id: "cleanup-no-change", protocol: "cleanup", prompts: { before: "plastic bags and bottles littered on an empty lot, phone photo", after: "plastic bags and bottles littered on an empty lot, phone photo, slightly different angle" }, note: "After photo still littered" },
-];
+
 
 async function generate(): Promise<Case[]> {
   await mkdir(`${ROOT}/fakes`, { recursive: true });
