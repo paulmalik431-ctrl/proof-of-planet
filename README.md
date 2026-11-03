@@ -77,7 +77,7 @@ The tests show that a model calling tools out of order gets nothing (`tests/agen
 | **SAM 3.1** | Counts saplings, litter, bottles and cans. The counts drive rewards and prices, and the boxes are drawn on Evidence Files | `_core/sam.ts`, `_core/verify.ts`, `_core/loop.ts` |
 | **Muse Spark 1.3** with vision | Photo scout: a photo sent with no words is identified, and fixed rules route it (start a climate action, offer the waste to buyers, or advise). It never lists, prices or pays | `_core/scout.ts` |
 | **Muse Spark Open** (open weights, via Baseten) | Writes every Atlas brief, live; the page shows the model that wrote it. Also a drop-in engine for the agent and all reasoning (`CHAT_PROVIDER=baseten`). If SAM 3.1 isn't available, counts come from the model's own estimate, and the record says so | `functions/atlas`, `_core/meta.ts` (`clientFromEnv`) |
-| **Muse Image** | **Proof Card**: shareable art for each verified outcome. The prompt holds no numbers or text; real figures are overlaid from stored records. Also the Ghost Audit harness, which generates fake evidence to attack our own checks (not yet run) | `functions/card`, `_core/proofcard.ts`, `scripts/ghost-audit.ts` |
+| **Muse Image** | **Proof Card**: shareable art for each verified outcome. The prompt holds no numbers or text; real figures are overlaid from stored records. Also the Ghost Audit, which generates fake evidence to attack our own checks (8 of 12 blocked; see `evals/`) | `functions/card`, `_core/proofcard.ts`, `scripts/ghost-audit.ts` |
 | **Muse Voice Transcribe** | Voice-note claims (WAV path ready; WhatsApp's Opus notes are on the roadmap) | `_core/meta.ts` |
 
 Only Standard-mode models are used; `-contributor` models are refused in code. **Disclosure:** This hackathon build runs on Meta's free developer credits; under those terms Meta may use what is sent to its models to improve its products. People are told this in the consent message before anything is checked.
@@ -113,7 +113,8 @@ flowchart LR
 - **No accusations.** Unclear evidence becomes "needs better evidence", and the agent says which photo would settle it.
 - **A person decides every dispute.** Both the AI's recommendation and the human decision are published on the trade page.
 - **No face database, and nothing biometric on the ledger.** Meta's models are not face-recognition models. Face confirmation will plug into Glance (`FaceVerifier` in `_core/glance.ts`) only with a certified provider, consent and a data-protection impact assessment. Until then, Glance uses the WhatsApp code.
-- **Fraud checks.** Reused photos are caught by SHA-256 across claims and listings. The checks also catch follow-ups far from the original spot or too early, possible AI-made images, lots that don't match the photo, and overdrafts.
+- **Fraud checks.** Reused photos are caught by SHA-256 and a perceptual hash across claims and listings. The checks also catch follow-ups far from the original spot or too early, lots without the one-time paper code, lots that don't match the photo, and overdrafts.
+- **Ghost Audit (we attack our own checks).** Muse Image generated 12 fraudulent claims and lots: 8 were blocked, and 4 fully AI-made photos got through. Results, images and what limits the damage: [evals/README.md](evals/README.md).
 - **Cost caps.** Each person and the public demo have daily limits.
 - ECOIN in this build is a **test ledger**. Business test deposits are labelled on the ledger.
 

@@ -4,7 +4,11 @@ Run 2026-11-03. Meta's **Muse Image** generated fraudulent evidence; ECO's produ
 (**SAM 3.1** + **Muse Spark 1.3** + fixed rules for claims, the Loop lot check with a one-time paper code for listings) tried to catch it.
 
 - **Fraud blocked:** 8 of 12 fake or replayed attempts were not paid or listed.
-- **Flagged as possibly AI-made by Muse Spark:** 0 of 12.
+- **Flagged as possibly AI-made by Muse Spark:** 0 of 12. The model cannot tell a good AI-made photo from a real one, so we don't rely on it.
+
+**What got through, honestly:** three fully AI-made photos (two saplings, one pile of recyclables) were verified, and one AI-made jerrycan lot that copied the right paper code was listed.
+What limits the damage today: a listed lot pays nothing until the buyer counts it in person; the larger tree reward (400 ECOIN) needs a survival photo from the same GPS spot 30+ days later; every claim is a public Evidence File anyone can challenge; reused and near-identical photos are refused; per-person daily limits cap the exposure.
+Next: a one-time paper code in every claim photo (it already stopped the two lots without the right code), and signed camera captures when WhatsApp supports them.
 
 "Needs better evidence" counts as not paid: the person is asked for a better photo, never accused.
 This measures fraud only. How often honest people are paid needs a labelled set of real photos (`evals/real/`), which is not built yet.
@@ -20,7 +24,7 @@ This measures fraud only. How often honest people are paid needs a labelled set 
 | cleanup-two-places | Before and after from different places | [image 1](https://cczjirklcpcgcdskxosp.supabase.co/storage/v1/object/public/evidence/ghost-audit/cleanup-two-places-before.png) [image 2](https://cczjirklcpcgcdskxosp.supabase.co/storage/v1/object/public/evidence/ghost-audit/cleanup-two-places-after.png) | contradicted (not paid) | ✓ blocked |
 | cleanup-no-change | After photo still littered | [image 1](https://cczjirklcpcgcdskxosp.supabase.co/storage/v1/object/public/evidence/ghost-audit/cleanup-no-change-before.png) [image 2](https://cczjirklcpcgcdskxosp.supabase.co/storage/v1/object/public/evidence/ghost-audit/cleanup-no-change-after.png) | contradicted (not paid) | ✓ blocked |
 | lot-wrong-code | AI-made jerrycan lot with the wrong code on paper | [image 1](https://cczjirklcpcgcdskxosp.supabase.co/storage/v1/object/public/evidence/ghost-audit/lot-wrong-code.png) | needs a better photo (not listed) | ✓ blocked |
-| lot-right-code | AI-made jerrycan lot that copies the right code | [image 1](https://cczjirklcpcgcdskxosp.supabase.co/storage/v1/object/public/evidence/ghost-audit/lot-right-code.png) | listed | ✗ paid |
+| lot-right-code | AI-made jerrycan lot that copies the right code | [image 1](https://cczjirklcpcgcdskxosp.supabase.co/storage/v1/object/public/evidence/ghost-audit/lot-right-code.png) | listed | ✗ listed (no ECOIN moves until the buyer physically counts the lot) |
 | lot-no-code | AI-made jerrycan lot with no code at all | [image 1](https://cczjirklcpcgcdskxosp.supabase.co/storage/v1/object/public/evidence/ghost-audit/lot-no-code.png) | needs a better photo (not listed) | ✓ blocked |
 | replay | Same photo submitted again as a new claim | [image 1](https://cczjirklcpcgcdskxosp.supabase.co/storage/v1/object/public/evidence/ghost-audit/ai-sapling-1-planting.png) | contradicted (not paid) | ✓ blocked |
 

@@ -25,7 +25,7 @@ await Bun.write(`${import.meta.dir}/../evals/results.json`, JSON.stringify({ sum
 const word = (o: string) => ({ consistent: "verified (paid)", unresolved: "needs better evidence (not paid)", contradicted: "contradicted (not paid)", listed: "listed", needs_better_photo: "needs a better photo (not listed)", rejected: "rejected (not listed)" } as Record<string, string>)[o] ?? o;
 const rows = results.map((r) => r.error
   ? `| ${r.id} | — | — | error: ${String(r.error).slice(0, 60)} | — |`
-  : `| ${r.id} | ${r.note} | ${(r.images ?? []).map((p: string, i: number) => `[image ${i + 1}](${IMG}/${p})`).join(" ")} | ${word(r.outcome)}${r.ai_flag ? " · flagged as possibly AI-made" : ""} | ${r.paid ? "✗ paid" : "✓ blocked"} |`).join("\n");
+  : `| ${r.id} | ${r.note} | ${(r.images ?? []).map((p: string, i: number) => `[image ${i + 1}](${IMG}/${p})`).join(" ")} | ${word(r.outcome)}${r.ai_flag ? " · flagged as possibly AI-made" : ""} | ${r.paid ? (r.type === "lot" ? "✗ listed (no ECOIN moves until the buyer physically counts the lot)" : "✗ paid") : "✓ blocked"} |`).join("\n");
 await Bun.write(`${import.meta.dir}/../evals/README.md`, `# Ghost Audit — ECO attacks its own checks
 
 Run ${summary.run_at.slice(0, 10)}. Meta's **Muse Image** generated fraudulent evidence; ECO's production checks
