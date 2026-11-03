@@ -1,12 +1,12 @@
 // The agent's tools. Each one enforces its own rules; the model only chooses which to call.
 // Money moves in exactly four places, all rule-bound: verify_claim (mint for verified action),
 // accept_offer (buyer → escrow), confirm_delivery / resolve_dispute (escrow → seller/buyer, with fees),
-// and Glance code confirmation (customer → shop, with fees).
+// Glance code confirmation (customer → shop, with fees), and adopt_tree (company → planter, fixed price, with fees).
 import type { ToolDef } from "./meta.ts";
 import { nextMissingPhoto, PROTOCOLS, type ProtocolId, STARTABLE } from "./protocols.ts";
 import { verifyClaim } from "./verify.ts";
 import { assessLot, bestMatch, type Demand, type Grade, type Intake, type Listing, MATERIALS, type MaterialId, mediate, newChallenge, type Trade } from "./loop.ts";
-import { escrowLock, escrowRefund, escrowRelease, escrowSplit, payment as paymentLegs } from "./money.ts";
+import { ADOPTION, adoptionPayment, escrowLock, escrowRefund, escrowRelease, escrowSplit, payment as paymentLegs } from "./money.ts";
 import { checkCode, CODE_TTL_MS, hashCode, MAX_PAYMENT, newCode, normalisePhone } from "./glance.ts";
 import type { AgentDeps as Deps } from "./agent.ts";
 import type { Account, Claim, Role, Session, Store } from "./store.ts";
@@ -46,6 +46,8 @@ const BUSINESS: ToolDef[] = [
   fn("confirm_delivery", "Loop (business): record the weighed intake. Escrow pays the seller for the accepted quantity at your bid; any difference returns to you.", { trade_id: TRADE_ID, accepted_quantity: { type: "number", description: "weighed and accepted, in the material's unit" }, grade: GRADE, note: { type: "string" } }, ["trade_id", "accepted_quantity"]),
   fn("dispute_trade", "Loop (business): the delivery was missing or not as listed. Meta AI reviews the evidence; an ECO reviewer decides.", { trade_id: TRADE_ID, reason: { type: "string" } }, ["trade_id", "reason"]),
   fn("top_up_test_ecoin", "Demo only: give this business 5,000 test ECOIN (once), clearly labelled on the ledger."),
+  fn("trees_to_adopt", "Tree adoption (company): verified trees waiting for an adopter, with their Evidence Files and the fixed adoption price."),
+  fn("adopt_tree", "Tree adoption (company): adopt a verified tree. Pays the planter the fixed adoption price from this company's ECOIN; one adopter per tree.", { tree_id: { type: "string", description: "tree id or its first characters; omit for the oldest tree waiting" } }),
 ];
 const SHOP: ToolDef[] = [
   fn("charge_customer", "Glance (shop): charge a customer by phone number. ECO sends them a 6-digit code on WhatsApp.", { phone: { type: "string" }, amount: { type: "number" } }, ["phone", "amount"]),
@@ -298,7 +300,7 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
       account.roles = roles;
       account.name = nm;
       return role === "business"
-        ? { registered: nm, next: "Share the drop-off location, then use buy_waste. In this demo, top_up_test_ecoin gives 5,000 test ECOIN." }
+        ? { registered: nm, next: "Recyclers: share the drop-off location, then buy_waste. Companies adopting trees: trees_to_adopt, then adopt_tree. In this demo, top_up_test_ecoin gives 5,000 test ECOIN first." }
         : { registered: nm, next: "To get paid: charge_customer with their phone number and amount; they read you the WhatsApp code; enter_code." };
     }
 
@@ -365,6 +367,37 @@ export async function runTool(c: Ctx, name: string, a: Record<string, unknown>):
       if ((await store.ledgerOf(account.id, 1000)).some((e) => e.kind === "deposit")) return { error: "Test ECOIN was already given to this business." };
       const [e] = await store.post([{ account_id: account.id, amount: 5000, kind: "deposit" }], null, "Test deposit (demo only)");
       return { deposited: 5000, ledger_entry: `#${e.seq}` };
+    }
+
+    // ── Tree adoption: existing ECOIN moves from a company to a planter at a fixed price. Never a mint. ──
+    case "trees_to_adopt": {
+      if (!account.roles.includes("business")) return { error: "Register as a company first (register_business)." };
+      const trees = await store.adoptableTrees(account.id, 5);
+      return {
+        price_ecoin: ADOPTION.price,
+        trees: trees.map((t) => ({ id: short(t.id), verified: t.verified_at?.slice(0, 10) ?? null, evidence_file: link(c, "claim.html", t.id) })),
+        note: trees.length ? undefined : "No verified trees are waiting right now.",
+      };
+    }
+    case "adopt_tree": {
+      if (!account.roles.includes("business")) return { error: "Register as a company first (register_business)." };
+      const want = String(a.tree_id ?? "").trim().replace(/^#/, "").toLowerCase();
+      const trees = await store.adoptableTrees(account.id, 200);
+      const tree = want ? trees.find((t) => t.id.startsWith(want)) : trees[0];
+      if (!tree) return { error: want ? "That tree isn't waiting for adoption (it may be adopted already, not verified, or your own)." : "No verified trees are waiting right now." };
+      if (tree.protocol !== "tree_planting" || tree.status !== "consistent" || tree.account_id === account.id) return { error: "Only someone else's verified tree can be adopted." };
+      if ((await store.balance(account.id)) < ADOPTION.price) return { error: `Adoption costs ${ADOPTION.price} ECOIN and this company's balance is lower. In this demo, top_up_test_ecoin adds test ECOIN.` };
+      if (!(await store.createAdoption({ claim_id: tree.id, business_id: account.id, planter_id: tree.account_id, amount: ADOPTION.price }))) return { error: "That tree was just adopted by someone else." };
+      const { legs, split: s } = adoptionPayment(account.id, tree.account_id);
+      try {
+        await store.post(legs, tree.id, `Tree adoption by ${account.name ?? "a company"}`);
+      } catch (e) {
+        await store.deleteAdoption(tree.id);
+        return { error: `Adoption not paid: ${String(e).slice(0, 120)}` };
+      }
+      const card = `${c.deps.publicUrl}/card.html?claim=${tree.id}`;
+      await notify(c, tree.account_id, `🌳 Your tree #${short(tree.id)} was adopted by *${account.name ?? "a company"}*! You received *${s.net} ECOIN* (fee ${s.fee}). Proof Card: ${card}`);
+      return { adopted: short(tree.id), paid: ADOPTION.price, planter_received: s.net, fee: s.fee, to_reserve: s.reserve, evidence_file: link(c, "claim.html", tree.id), proof_card: card };
     }
 
     // ── Glance ──

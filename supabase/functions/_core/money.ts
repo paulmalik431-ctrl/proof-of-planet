@@ -72,3 +72,20 @@ export function payment(customer: string, shop: string, amount: number): { legs:
     ]),
   };
 }
+
+/** Tree adoption: a fixed price a company pays the planter of a verified tree. A transfer of existing ECOIN — it
+ *  never mints. The planter pays the marketplace fee, which feeds the treasury and the Reserve like every fee. */
+export const ADOPTION = { price: 200, feeBps: 200 } as const;
+
+export function adoptionPayment(business: string, planter: string): { legs: Leg[]; split: FeeSplit } {
+  const s = split(ADOPTION.price, ADOPTION.feeBps);
+  return {
+    split: s,
+    legs: nz([
+      { account_id: business, amount: -ADOPTION.price, kind: "trade" },
+      { account_id: planter, amount: s.net, kind: "trade" },
+      { account_id: SYSTEM.treasury, amount: s.treasury, kind: "fee" },
+      { account_id: SYSTEM.reserve, amount: s.reserve, kind: "reserve" },
+    ]),
+  };
+}

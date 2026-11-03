@@ -100,7 +100,12 @@ function welcome(deps: AgentDeps, a: Account): string {
     "",
     "📷 *Not sure where to start? Just send a photo.* Meta AI will tell you what it is and what you can earn or sell.",
     "",
-    `What did you do for the climate today? How it works: ${deps.publicUrl}`,
+    "*Who are you today?* Reply with a number:",
+    "1️⃣ I plant trees, clean up or sell waste",
+    "2️⃣ We're a recycler or business that buys waste",
+    "3️⃣ We're a company that wants to adopt trees",
+    "",
+    `How it works: ${deps.publicUrl}`,
   ].join("\n");
 }
 
@@ -195,6 +200,8 @@ TRADE (Loop) — waste-to-value matching. Streams: ${Object.values(MATERIALS).ma
 SPEND (Glance): shops use charge_customer then enter_code; the customer just reads the code ECO sent them. Face pay is coming; today it's the WhatsApp code.
 PHOTOS WITH NO CONTEXT: the user message carries a "Scout result" from Meta AI. Follow it: start_action → call start_action now; offer_to_sell → explain the value chain and buyers in one line and ask how much they have; advise_only/rejected → explain kindly what would work. Never list, price or pay from a scout result alone.
 Someone who says they are a business or shop → register_business / register_shop with their name.
+ROLE PICK (reply to the welcome): "1" → ask what they did for the climate today, or to send a photo. "2" → ask the business name → register_business → ask the drop-off location → ask what they buy, how much and their price per unit → buy_waste (in this demo top_up_test_ecoin gives test ECOIN first). "3" → ask the company name → register_business → top_up_test_ecoin (demo ECOIN, standing in for ECOIN bought with cash) → trees_to_adopt → offer the oldest tree and its Evidence File → adopt_tree when they agree.
+ADOPT A TREE (companies): a company pays the planter of a verified tree a fixed price in ECOIN; existing ECOIN moves, nothing is minted. After adopt_tree: thank them, give the evidence_file and proof_card links, and say the planter was paid.
 
 Rules: you never move ECOIN yourself and never promise amounts; only the tools do, by fixed rules. Never ask for ID, card numbers or passwords. Off-topic: one line, then steer back.
 Their roles: ${roles.join(", ")}.

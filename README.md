@@ -38,12 +38,13 @@ All four engines run through one agent: **ECO on WhatsApp**, which is Muse Spark
 
 ## The design rule: the AI can look and talk, only rules can move money
 
-The model chooses which tool to call. The tools enforce the rules, and ECOIN moves through exactly four gates:
+The model chooses which tool to call. The tools enforce the rules, and ECOIN moves through exactly five gates:
 
 1. **Mint** (`verify_claim`): only after Witness finds the evidence consistent. The amount comes from the protocol, never from the model.
 2. **Escrow** (`accept_offer`): only from the buyer's own balance.
 3. **Release** (`confirm_delivery`, `resolve_dispute`): only when the buyer confirms delivery, or a human reviewer decides a dispute they are not part of.
-4. **Pay** (Glance): only with the customer's 6-digit WhatsApp code. The code is stored as a salted hash, expires in 5 minutes and allows 3 tries.
+4. **Adopt** (`adopt_tree`): a company pays the planter of someone else's verified tree a fixed 200 ECOIN, once per tree. Existing ECOIN moves; nothing is minted.
+5. **Pay** (Glance): only with the customer's 6-digit WhatsApp code. The code is stored as a salted hash, expires in 5 minutes and allows 3 tries.
 
 The ledger enforces the same rules twice, once in TypeScript (`checkLegs`) and once in SQL (`ledger_post`):
 - minting can only credit;
@@ -119,7 +120,7 @@ flowchart LR
 ## Run it
 
 ```bash
-bun test                                   # 81 tests: SAM parser, rules, ledger & fees, per-trade escrow, Loop, Glance, scout, Proof Card, agent, WhatsApp. Offline, no API cost.
+bun test                                   # 85 tests: SAM parser, rules, ledger & fees, per-trade escrow, Loop, Glance, scout, Proof Card, tree adoption, agent, WhatsApp. Offline, no API cost.
 bun scripts/smoke.ts                       # live smoke test of the deployed site, functions, ledger chain and seller flow
 MODEL_API_KEY=... bun run dev              # local site + live agent at http://localhost:8787
 bun scripts/dev.ts --seed a.jpg b.jpg      # offline: a scripted earn → trade → spend story to explore the pages

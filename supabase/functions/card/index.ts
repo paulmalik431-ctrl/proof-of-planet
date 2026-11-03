@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
   if (claimId) {
     const c = await store.claim(id);
     if (!c || c.status !== "consistent") return json({ error: "Proof Cards are made only for verified actions." }, 404);
-    facts = claimFacts(c, deps.publicUrl); subject = { kind: "claim" as const, protocol: c.protocol };
+    facts = claimFacts(c, deps.publicUrl, await store.adoptionOf(c.id)); subject = { kind: "claim" as const, protocol: c.protocol };
   } else {
     const t = await store.trade(id);
     if (!t || !["released", "settled"].includes(t.status)) return json({ error: "Proof Cards are made only for completed trades." }, 404);

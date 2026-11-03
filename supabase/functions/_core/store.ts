@@ -34,6 +34,15 @@ export interface Claim {
   verified_at: string | null;
 }
 
+/** A company adopts a verified tree by paying its planter a fixed price (money.ts ADOPTION). One adoption per tree. */
+export interface Adoption {
+  claim_id: string;
+  business_id: string;
+  planter_id: string;
+  amount: number;
+  created_at: string;
+}
+
 export interface Evidence {
   id: string;
   claim_id: string | null; // null while waiting for the person to say what it is for
@@ -129,6 +138,14 @@ export interface Store {
   updatePayment(id: string, patch: Partial<Payment>): Promise<void>;
   pendingPaymentsOf(shop: string): Promise<Payment[]>;
 
+  /** Verified tree plantings with no adoption yet, oldest first, excluding the given account's own trees. */
+  adoptableTrees(excludeAccountId: string, limit: number): Promise<Claim[]>;
+  /** Records an adoption. Returns false if the tree is already adopted (the unique claim_id is the lock). */
+  createAdoption(a: Omit<Adoption, "created_at">): Promise<boolean>;
+  /** Undo an adoption whose payment failed (it never paid). */
+  deleteAdoption(claimId: string): Promise<void>;
+  adoptionOf(claimId: string): Promise<(Adoption & { business_name: string }) | null>;
+
   /** Messages for people other than the sender (simulator inbox; WhatsApp sends directly). */
   enqueue(accountId: string, text: string): Promise<void>;
   drain(accountId: string): Promise<string[]>;
@@ -178,6 +195,24 @@ export class MemoryStore implements Store {
   async claim(id: string) { return this.get(this.claims, id); }
   async updateClaim(id: string, p: Partial<Claim>) { this.patch(this.claims, id, p); }
   async claimsOf(a: string) { return this.claims.filter((c) => c.account_id === a).map((c) => structuredClone(c)); }
+
+  adoptions: Adoption[] = [];
+  async adoptableTrees(exclude: string, limit: number) {
+    const taken = new Set(this.adoptions.map((a) => a.claim_id));
+    return this.claims.filter((c) => c.protocol === "tree_planting" && c.status === "consistent" && c.account_id !== exclude && !taken.has(c.id))
+      .slice(0, limit).map((c) => structuredClone(c));
+  }
+  async createAdoption(a: Omit<Adoption, "created_at">) {
+    if (this.adoptions.some((x) => x.claim_id === a.claim_id)) return false;
+    this.adoptions.push({ ...a, created_at: this.now().toISOString() });
+    return true;
+  }
+  async deleteAdoption(claimId: string) { this.adoptions = this.adoptions.filter((a) => a.claim_id !== claimId); }
+  async adoptionOf(claimId: string) {
+    const a = this.adoptions.find((x) => x.claim_id === claimId);
+    if (!a) return null;
+    return { ...a, business_name: (await this.accountById(a.business_id))?.name ?? "a company" };
+  }
 
   async addEvidence(e: New<Evidence, "superseded">) { return this.add<Evidence>(this.evidence, { ...e, superseded: false }); }
   async evidenceOf(claimId: string) { return this.evidence.filter((e) => e.claim_id === claimId && !e.superseded).map((e) => structuredClone(e)); }

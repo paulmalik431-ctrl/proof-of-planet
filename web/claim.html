@@ -33,8 +33,10 @@ async function load() {
     rest(`public_claims?id=eq.${id}&select=*`),
     rest(`public_evidence?claim_id=eq.${id}&select=*&order=created_at`),
     rest(`public_checks?claim_id=eq.${id}&select=*&order=created_at.desc`),
-    rest(`public_ledger?ref=eq.${id}&select=*`),
+    rest(`public_ledger?ref=eq.${id}&select=*&order=seq.asc`),
   ]);
+  const adoption = (await rest(`public_adoptions?claim_id=eq.${id}&select=*`).catch(() => []))[0];
+  const rewards = ledger.filter((e) => e.kind === "reward");
   const c = claims[0];
   if (!c) { main.innerHTML = "<p>This Evidence File doesn't exist, or the claim hasn't been checked yet.</p>"; return; }
   const k = checks[0];
@@ -61,7 +63,8 @@ async function load() {
     ...photos.map((photo) => ({ at: photo.created_at, title: "Evidence received: " + (photo.role ?? "photo"), detail: "SHA-256 " + short(photo.sha256) })),
   ];
   if (k) claimSteps.push({ at: k.created_at, title: "Evidence checked", detail: (k.models?.calls ?? 0) + " model calls · " + ((k.models?.ms ?? 0) / 1000).toFixed(1) + " s · " + (OUTCOME_WORDS[k.decision.outcome] ?? k.decision.outcome) });
-  for (const entry of ledger) if (entry.amount > 0) claimSteps.push({ at: entry.at, title: "Reward posted", detail: "+" + entry.amount + " ECOIN · ledger #" + entry.seq });
+  for (const entry of rewards) claimSteps.push({ at: entry.at, title: "Reward posted", detail: "+" + entry.amount + " ECOIN · ledger #" + entry.seq });
+  if (adoption) claimSteps.push({ at: adoption.created_at, title: "Adopted by " + (adoption.business_name ?? "a company"), detail: adoption.amount + " ECOIN paid to the planter (existing ECOIN, not a mint)" });
   claimSteps.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
   main.append(el("div", { class: "card", style: "margin-bottom:16px" },
     el("p", { class: "label" }, "Receipt step trace"),
@@ -76,8 +79,8 @@ async function load() {
       el("div", { class: "card" },
         el("p", { class: "label" }, "Decision"),
         el("ul", { class: "reasons" }, (k.decision.reasons ?? []).map((r) => el("li", {}, r))),
-        el("p", { style: "margin-top:12px" }, ledger[0]
-          ? [el("b", {}, `+${ledger[0].amount} ECOIN`), " · ledger entry ", el("a", { href: `ledger.html#seq-${ledger[0].seq}` }, `#${ledger[0].seq}`)]
+        el("p", { style: "margin-top:12px" }, rewards[0]
+          ? [el("b", {}, `+${rewards[0].amount} ECOIN`), " · ledger entry ", el("a", { href: `ledger.html#seq-${rewards[0].seq}` }, `#${rewards[0].seq}`)]
           : el("span", { class: "muted" }, "No ECOIN paid for this claim.")),
         o.better_evidence ? el("p", { class: "small muted" }, `What would settle it: ${o.better_evidence}`) : null),
       el("div", { class: "card" },

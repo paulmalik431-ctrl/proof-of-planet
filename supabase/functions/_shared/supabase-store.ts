@@ -1,6 +1,6 @@
 // Store backed by Supabase Postgres + Storage, used by the edge functions (service role).
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2";
-import type { Account, Check, Claim, Evidence, New, Session, Store } from "../_core/store.ts";
+import type { Account, Adoption, Check, Claim, Evidence, New, Session, Store } from "../_core/store.ts";
 import { pseudonym } from "../_core/store.ts";
 import type { Leg, LedgerEntry } from "../_core/ledger.ts";
 import type { Demand, Listing, Trade } from "../_core/loop.ts";
@@ -44,6 +44,25 @@ export class SupabaseStore implements Store {
   async claim(id: string) { return must(await this.one<Claim>("claims", "id", id), "claim"); }
   async updateClaim(id: string, p: Partial<Claim>) { await this.upd("claims", id, p, "update claim"); }
   async claimsOf(a: string) { return must(await this.db.from("claims").select("*").eq("account_id", a).order("created_at"), "claims") as Claim[]; }
+
+  async adoptableTrees(exclude: string, limit: number) {
+    const taken = (must(await this.db.from("adoptions").select("claim_id"), "adoptions") as Array<{ claim_id: string }>).map((r) => r.claim_id);
+    let q = this.db.from("claims").select("*").eq("protocol", "tree_planting").eq("status", "consistent").neq("account_id", exclude);
+    if (taken.length) q = q.not("id", "in", `(${taken.join(",")})`);
+    return must(await q.order("verified_at", { ascending: true }).limit(limit), "adoptable trees") as Claim[];
+  }
+  async createAdoption(a: Omit<Adoption, "created_at">) {
+    const r = await this.db.from("adoptions").insert(a);
+    if (r.error?.code === "23505") return false; // already adopted
+    must(r, "create adoption");
+    return true;
+  }
+  async deleteAdoption(claimId: string) { must(await this.db.from("adoptions").delete().eq("claim_id", claimId), "delete adoption"); }
+  async adoptionOf(claimId: string) {
+    const a = must(await this.db.from("adoptions").select("*").eq("claim_id", claimId).maybeSingle(), "adoption") as Adoption | null;
+    if (!a) return null;
+    return { ...a, business_name: (await this.accountById(a.business_id))?.name ?? "a company" };
+  }
 
   async addEvidence(e: New<Evidence, "superseded">) { return this.ins<Evidence>("evidence", e, "add evidence"); }
   async evidenceOf(claimId: string) { return must(await this.db.from("evidence").select("*").eq("claim_id", claimId).eq("superseded", false).order("created_at"), "evidence") as Evidence[]; }

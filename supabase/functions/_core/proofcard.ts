@@ -28,11 +28,17 @@ export function proofCardPrompt(s: CardSubject): string {
 export interface CardFacts { title: string; lines: string[]; evidence: string; }
 
 /** The printed figures. Every number here comes from stored, verified records — never from a model. */
-export function claimFacts(c: { id: string; protocol: ProtocolId; reward: number; verified_at: string | null }, publicUrl: string): CardFacts {
+export function claimFacts(c: { id: string; protocol: ProtocolId; reward: number; verified_at: string | null }, publicUrl: string,
+  adoption: { business_name: string; amount: number } | null = null): CardFacts {
   const p = PROTOCOLS[c.protocol];
   return {
     title: `${p.title}, verified`,
-    lines: [`${c.reward} ECOIN minted for this action`, `Verified ${c.verified_at ? c.verified_at.slice(0, 10) : ""}`.trim(), "Checked by Meta AI · decided by fixed rules"],
+    lines: [
+      `${c.reward} ECOIN minted for this action`,
+      ...(adoption ? [`Adopted by ${adoption.business_name} · ${adoption.amount} ECOIN paid to the planter`] : []),
+      `Verified ${c.verified_at ? c.verified_at.slice(0, 10) : ""}`.trim(),
+      "Checked by Meta AI · decided by fixed rules",
+    ],
     evidence: `${publicUrl}/claim.html?id=${c.id}`,
   };
 }
