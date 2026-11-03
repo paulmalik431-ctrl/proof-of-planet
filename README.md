@@ -72,10 +72,11 @@ The tests show that a model calling tools out of order gets nothing (`tests/agen
 |---|---|---|
 | **WhatsApp Cloud API** | Intake, replies, photos, location pins, messages between people, Glance codes | `_core/whatsapp.ts`, `functions/whatsapp` |
 | **Muse Spark 1.3** with tool calling | The agent: 23 tools across four roles, in any language | `_core/agent.ts`, `_core/tools.ts` |
-| **Muse Spark 1.3** with vision and JSON schema | Witness observations, Loop grading, dispute recommendations, Atlas briefs | `_core/verify.ts`, `_core/loop.ts`, `functions/atlas` |
+| **Muse Spark 1.3** with vision and JSON schema | Witness observations, Loop grading, dispute recommendations | `_core/verify.ts`, `_core/loop.ts` |
 | **SAM 3.1** | Counts saplings, litter, bottles and cans. The counts drive rewards and prices, and the boxes are drawn on Evidence Files | `_core/sam.ts`, `_core/verify.ts`, `_core/loop.ts` |
-| **Muse Spark Open** (open weights, via Baseten) | Drop-in engine for the agent and all reasoning (`CHAT_PROVIDER=baseten`). If SAM 3.1 isn't available, counts come from the model's own estimate, and the record says so | `_core/meta.ts` (`clientFromEnv`) |
-| **Muse Image** | Ghost Audit: generates fraudulent evidence to attack our own checks | `scripts/ghost-audit.ts` |
+| **Muse Spark 1.3** with vision | Photo scout: a photo sent with no words is identified, and fixed rules route it (start a climate action, offer the waste to buyers, or advise). It never lists, prices or pays | `_core/scout.ts` |
+| **Muse Spark Open** (open weights, via Baseten) | Writes every Atlas brief, live; the page shows the model that wrote it. Also a drop-in engine for the agent and all reasoning (`CHAT_PROVIDER=baseten`). If SAM 3.1 isn't available, counts come from the model's own estimate, and the record says so | `functions/atlas`, `_core/meta.ts` (`clientFromEnv`) |
+| **Muse Image** | **Proof Card**: shareable art for each verified outcome. The prompt holds no numbers or text; real figures are overlaid from stored records. Also the Ghost Audit harness, which generates fake evidence to attack our own checks (not yet run) | `functions/card`, `_core/proofcard.ts`, `scripts/ghost-audit.ts` |
 | **Muse Voice Transcribe** | Voice-note claims (WAV path ready; WhatsApp's Opus notes are on the roadmap) | `_core/meta.ts` |
 
 Only Standard-mode models are used; `-contributor` models are refused in code. **Disclosure:** This hackathon build runs on Meta's free developer credits; under those terms Meta may use what is sent to its models to improve its products. People are told this in the consent message before anything is checked.
@@ -100,7 +101,7 @@ flowchart LR
   V --> AT[atlas function · Muse Spark brief]
 ```
 
-- **Backend:** Supabase. Postgres with row-level security, append-only triggers, `ledger_post` (atomic, overdraft-proof, hashes exactly like the browser), public read-only views, Storage, and Deno Edge Functions (`whatsapp`, `simulate`, `atlas`).
+- **Backend:** Supabase. Postgres with row-level security, append-only triggers, `ledger_post` (atomic, overdraft-proof, hashes exactly like the browser), public read-only views, Storage, and Deno Edge Functions (`whatsapp`, `simulate`, `atlas`, `intake`, `card`, `wa-setup`).
 - **Core:** plain TypeScript in `supabase/functions/_core`. It runs the same in Deno (production), Bun (tests and scripts) and the browser (ledger check).
 - **Web:** static pages on GitHub Pages that read only the public views.
 
@@ -118,7 +119,8 @@ flowchart LR
 ## Run it
 
 ```bash
-bun test                                   # 55 tests: SAM parser, rules, ledger & fees, escrow invariants, Loop, Glance, agent, WhatsApp. Offline, no API cost.
+bun test                                   # 81 tests: SAM parser, rules, ledger & fees, per-trade escrow, Loop, Glance, scout, Proof Card, agent, WhatsApp. Offline, no API cost.
+bun scripts/smoke.ts                       # live smoke test of the deployed site, functions, ledger chain and seller flow
 MODEL_API_KEY=... bun run dev              # local site + live agent at http://localhost:8787
 bun scripts/dev.ts --seed a.jpg b.jpg      # offline: a scripted earn → trade → spend story to explore the pages
 MODEL_API_KEY=... bun run audit            # Ghost Audit (Muse Image fakes vs. Witness)
@@ -128,7 +130,7 @@ To deploy (Supabase, WhatsApp test number, GitHub Pages), see [docs/SETUP.md](do
 
 ## What was built during the hackathon
 
-This whole repository: the agent and its tools, Witness, Loop, Glance, Atlas, the ledger and Vault, the Supabase schema and functions, the web pages, the tests and the Ghost Audit. ECO and the ECO App existed before the event; none of their code is in this repository.
+This whole repository: the agent and its tools, Witness, Loop, Glance, Atlas, the ledger and Vault, the Supabase schema and functions, the photo scout, the Proof Card, the web pages, the tests and the Ghost Audit harness. ECO and the ECO App existed before the event; none of their code is in this repository.
 
 ## Roadmap
 

@@ -13,7 +13,7 @@ Read this before any task. It explains *why* the code looks the way it does, so 
 - **Judging:** Impact 30% · Use of Meta tooling 25% ("surprised even us") · Technical depth 20% · Demo 25% ("genuinely cool to watch"). In the final round judges **watch the videos live**.
 - **Prizes we are going for, and what each needs:**
   - **Overall / track** → the rubric above.
-  - **Open Weight** → Muse Spark Open (or Glimmer) visibly doing real work, verifiable by the infra partner (Baseten). Our path: `CHAT_PROVIDER=baseten` runs the agent on `meta-models/muse-spark-open-1026`. **Not yet proven live.**
+  - **Open Weight** → Muse Spark Open (or Glimmer) visibly doing real work, verifiable by the infra partner (Baseten). Our path: `CHAT_PROVIDER=baseten` runs on `meta-models/muse-spark-open-1026`. **Proven live (Nov 2): every Atlas brief is written by Muse Spark Open and the page shows the model.**
   - **Best Creative** → Muse Image or Muse Wonder **in the final experience**. Our path: the Proof Card (C2) and the Ghost Audit / cheat lab. The Proof Card is the only Muse Image users see, so don't drop it silently.
   - **Agentic** → autonomy, effectiveness, usefulness: the WhatsApp agent working through 23 tools, the bidding round (K2), scheduled follow-ups (C5).
   - **Most Viral** → X engagement until Nov 8 EOD (Claude + founder, after submission).
@@ -43,7 +43,7 @@ Business model: fees, not token price — 2% marketplace + 1% escrow on Loop, 1%
 - Honest wording: never "immutable", "deepfake-proof", "carbon credit", or a pilot that didn't happen. ECOIN here is a test ledger.
 - Cut-line: no Proof Card / follow-ups / bidding expansion until a **real-model** claim survives intake, partial settlement and duplicate replay **live**. After that, C2 (Proof Card) matters for the Creative prize — schedule it, don't drop it.
 
-## Where we are (Oct 28)
+## Where we are (Oct 28; see `docs/STATUS.md` for the latest)
 Live: Supabase backend, website, Meta + Baseten keys. 56 tests. The agent works live in Swahili and English; Witness correctly refused a snowy "Nairobi" photo and a reused photo. Open: SAM returns 0 (parser), Loop never run live, Spark Open never run live, verification latency 20–35 s, WhatsApp not connected. Details and how to test: `docs/HANDOFF.md`.
 
 ## Where we are going (what "done" looks like on Nov 3)
