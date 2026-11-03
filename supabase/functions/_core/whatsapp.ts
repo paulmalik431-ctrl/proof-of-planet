@@ -102,11 +102,14 @@ export async function sendText(c: WaConfig, to: string, body: string): Promise<v
 }
 
 /** Blue ticks, so the person knows ECO is working on it. */
+/** Marks the message read and shows "typing…" to the person while ECO works (falls back to a plain read receipt). */
 export async function markRead(c: WaConfig, messageId: string): Promise<void> {
   const f = c.fetch ?? fetch;
-  await f(`${graph(c)}/${c.phoneNumberId}/messages`, {
+  const send = (extra: Record<string, unknown>) => f(`${graph(c)}/${c.phoneNumberId}/messages`, {
     method: "POST",
     headers: { Authorization: `Bearer ${c.token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ messaging_product: "whatsapp", status: "read", message_id: messageId }),
-  }).catch(() => undefined);
+    body: JSON.stringify({ messaging_product: "whatsapp", status: "read", message_id: messageId, ...extra }),
+  }).catch(() => null);
+  const r = await send({ typing_indicator: { type: "text" } });
+  if (!r?.ok) await send({});
 }

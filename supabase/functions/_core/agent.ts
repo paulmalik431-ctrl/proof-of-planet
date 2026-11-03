@@ -82,12 +82,27 @@ export async function handle(deps: AgentDeps, msg: Inbound): Promise<string[]> {
     return [r.error ? `❌ ${r.error}` : `✅ Paid: ${r.paid} ECOIN. You receive ${r.shop_received} (fee ${r.fee}, of which ${r.to_reserve} goes to the ECO Reserve).`];
   }
 
+  // Role pick right after the welcome: a fixed, instant reply (no model call), recorded in the history for context.
+  const lastBot = [...session.history].reverse().find((h) => h.role === "assistant")?.content ?? "";
+  const pick = msg.kind === "text" ? (msg.text ?? "").trim() : "";
+  if (/^[123]$/.test(pick) && (session.history.length === 0 || /Who are you today|Reply with a number/i.test(String(lastBot)))) {
+    const reply = ROLE_REPLIES[pick as "1" | "2" | "3"];
+    session.history = [...session.history, { role: "user" as const, content: `Role pick: ${pick}` }, { role: "assistant" as const, content: reply }].slice(-HISTORY);
+    await store.saveSession(session);
+    return [reply];
+  }
   const userText = await fileInbound(c, msg);
   const reply = await converse(c, userText);
   session.history = [...session.history, { role: "user" as const, content: userText }, { role: "assistant" as const, content: reply }].slice(-HISTORY);
   await store.saveSession(session);
   return [reply, ...(c.after ?? [])];
 }
+
+const ROLE_REPLIES = {
+  "1": "Great 🌱 What did you do for the climate today: plant a tree, clean up a place, or sell waste like jerrycans or bottles? Tell me, or just send a photo.",
+  "2": "Great ♻️ What's your business name? I'll set you up to buy waste on Loop: you'll see every lot for sale with its photo, and pay only for what you count and accept.",
+  "3": "Wonderful 🌳 What's your company name? I'll set you up to adopt a verified tree: you pay the planter a fixed 200 ECOIN, and the tree's Proof Card shows your name.",
+} as const;
 
 function welcome(deps: AgentDeps, a: Account): string {
   return [
@@ -200,7 +215,7 @@ TRADE (Loop) — waste-to-value matching. Streams: ${Object.values(MATERIALS).ma
 SPEND (Glance): shops use charge_customer then enter_code; the customer just reads the code ECO sent them. Face pay is coming; today it's the WhatsApp code.
 PHOTOS WITH NO CONTEXT: the user message carries a "Scout result" from Meta AI. Follow it: start_action → call start_action now; offer_to_sell → explain the value chain and buyers in one line and ask how much they have; advise_only/rejected → explain kindly what would work. Never list, price or pay from a scout result alone.
 Someone who says they are a business or shop → register_business / register_shop with their name.
-ROLE PICK (reply to the welcome): "1" → ask what they did for the climate today, or to send a photo. "2" → ask the business name → register_business → top_up_test_ecoin (demo) → open_listings to show what's for sale with photo pages. They buy a lot with offer_on_listing (id + price per unit); a standing bid (buy_waste) is optional.
+ROLE PICK (reply to the welcome; ECO already asked the follow-up question, shown in history as "Role pick: N"): "1" → ask what they did for the climate today, or to send a photo. "2" → ask the business name → register_business → top_up_test_ecoin (demo) → open_listings to show what's for sale with photo pages. They buy a lot with offer_on_listing (id + price per unit); a standing bid (buy_waste) is optional.
 P2P: a business writing "offer #abc 30" → offer_on_listing(listing_id "abc", price 30). "What's for sale?" → open_listings. "3" → ask the company name → register_business → top_up_test_ecoin (demo ECOIN, standing in for ECOIN bought with cash) → trees_to_adopt → offer the oldest tree and its Evidence File → adopt_tree when they agree.
 ADOPT A TREE (companies): a company pays the planter of a verified tree a fixed price in ECOIN; existing ECOIN moves, nothing is minted. After adopt_tree: thank them, give the evidence_file and proof_card links, and say the planter was paid.
 

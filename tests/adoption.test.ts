@@ -83,3 +83,17 @@ describe("Tree adoption", () => {
     expect(welcome).toContain("adopt trees");
   });
 });
+
+describe("Role pick", () => {
+  test("replying 3 after the welcome answers instantly, with no model call", async () => {
+    const store = new MemoryStore(() => at);
+    const { meta, log } = fakeMeta({ agent: [] });
+    const deps = { store, meta, publicUrl: "https://eco.example", limits: { messagesPerDay: 100, verificationsPerDay: 10 } };
+    await handle(deps, m("254700000098", { text: "Hello" }));
+    await handle(deps, m("254700000098", { text: "Yes" }));
+    const calls = log.length;
+    const [r] = await handle(deps, m("254700000098", { text: "3" }));
+    expect(r).toContain("company name");
+    expect(log.length).toBe(calls);
+  });
+});
