@@ -1,0 +1,15 @@
+name: Replay a conversation
+on:
+  workflow_dispatch:
+    inputs:
+      messages: { description: "messages separated by |", required: true }
+permissions: { contents: read }
+jobs:
+  repro:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - env: { MSGS: "${{ inputs.messages }}" }
+        run: IFS='|' read -ra M <<< "$MSGS"; bun scripts/repro.ts "${M[@]}"

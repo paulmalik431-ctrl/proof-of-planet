@@ -45,6 +45,6 @@ Deno.serve(async (req) => {
     return json({ replies, inbox: a ? await deps.store.drain(a.id) : [], phone, account_id: a?.id ?? null });
   } catch (e) {
     console.error("simulate failed", String(e));
-    return json({ replies: ["Sorry, something went wrong on our side. Please try again."], inbox: [], phone });
+    return json({ replies: ["Sorry, something went wrong on our side. Please try again."], inbox: [], phone, debug: String(e).replace(/EAA[A-Za-z0-9]+/g, "[token]").slice(0, 400) });
   }
 });
