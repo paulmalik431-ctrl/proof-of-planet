@@ -1,3 +1,16 @@
+# Status — Nov 3, 2026, code freeze (Claude)
+
+- **Live smoke test** (`bun scripts/smoke.ts`, workflow "Live smoke test"): 27/27 passed on `9e03bb7`.
+  Site pages all 200; public views readable; ledger chain intact (4 entries); Atlas brief written by `meta-models/muse-spark-open-1026`;
+  WhatsApp webhook rejects a bad verify token (403) and unsigned posts (401); WhatsApp account subscribed, test number CONNECTED, quality GREEN,
+  permanent system-user token works; Proof Card refuses unknown trades; seller flow (consent → welcome → "sell 100 plastic bottles" → one-time code) works.
+  The cow-dung photo scout was skipped in CI only because Wikimedia rate-limits GitHub's runners (429); it was verified live on Nov 2.
+- **WhatsApp connected** on Meta's test number with a permanent system-user token; real messages in and out verified Nov 2. Up to 5 allowlisted phones.
+- **Fixed:** a duplicated `photoNearDuplicate` in `SupabaseStore` (Deno type error, harmless at runtime). CI now type-checks every edge function with Deno.
+- **Tests:** 81 pass offline.
+- **Not done:** no Loop trade has completed live yet (0 trades). The demo trade is filmed Nov 3 between two team members and must be labelled as a demo.
+  No accuracy numbers: the Ghost Audit and the C6 evaluation have not been run.
+
 # Status — Nov 2, 2026 (Claude)
 
 - **Live:** agentic photo scout (`_core/scout.ts`). A photo with no context is identified by Muse Spark; rules route it. Verified live:
