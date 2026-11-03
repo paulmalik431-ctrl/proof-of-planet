@@ -12,4 +12,4 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install
       - env: { MSGS: "${{ inputs.messages }}" }
-        run: IFS='|' read -ra M <<< "$MSGS"; bun scripts/repro.ts "${M[@]}"
+        run: if [ "$MSGS" = "status" ]; then bun scripts/status.ts; else IFS='|' read -ra M <<< "$MSGS"; bun scripts/repro.ts "${M[@]}"; fi
