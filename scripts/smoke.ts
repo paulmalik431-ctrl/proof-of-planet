@@ -88,15 +88,19 @@ await safe("seller: consent", async () => {
   record("seller: consent + welcome", /YES/.test(a) && /photo|ECOIN/i.test(b), "");
 });
 await safe("seller: photo scout (cow dung)", async () => {
-  const img = await fetch("https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Cow_Dung_Heap.jpg/960px-Cow_Dung_Heap.jpg", { headers: { "user-agent": "eco-proof-of-planet-smoke/1.0" } });
-  if (!img.ok) throw new Error(`sample photo ${img.status}`);
+  let img: Response | null = null;
+  for (let i = 0; i < 4 && !img?.ok; i++) {
+    if (i) await new Promise((r) => setTimeout(r, 8000 * i));
+    img = await fetch("https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Cow_Dung_Heap.jpg/960px-Cow_Dung_Heap.jpg", { headers: { "user-agent": "eco-proof-of-planet-smoke/1.0 (github.com/paulmalik431-ctrl/proof-of-planet)" } });
+  }
+  if (!img?.ok) { console.log(`SKIP  seller: photo scout — the sample photo host answered ${img?.status} (not our system)`); return; }
   const b64 = Buffer.from(await img.arrayBuffer()).toString("base64");
   const t = await say({ image: b64, mime: "image/jpeg" });
   record("seller: photo scout (cow dung)", /manure|farmer|compost|biogas|dung/i.test(t), "");
 });
 await safe("seller: start a sale", async () => {
   const t = await say({ text: "I want to sell 100 plastic bottles" });
-  record("seller: start a sale (asks for code photo)", /\b\d{4,6}\b|code/i.test(t), "");
+  record("seller: start a sale (asks for code photo)", /Write \*?[A-Z0-9]{4,6}\*?|code/i.test(t), "");
 });
 
 const failed = results.filter((r) => !r.ok);

@@ -10,8 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+      - uses: denoland/setup-deno@v2
+        with: { deno-version: v2.x }
       - run: bun install
       - run: bun test tests/
+      - run: deno check --node-modules-dir=none supabase/functions/*/index.ts
       - run: bun run build:web && git diff --exit-code web/js/ledger.js
   pages:
     if: github.ref == 'refs/heads/main'

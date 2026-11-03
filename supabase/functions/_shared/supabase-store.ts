@@ -71,17 +71,6 @@ export class SupabaseStore implements Store {
     ]);
     return (must(e, "dup") as unknown[]).length > 0 || (must(l, "dup") as unknown[]).length > 0;
   }
-  async photoNearDuplicate(phash: string, ref: string, maxDistance = 6) {
-    const [e, l] = await Promise.all([
-      this.db.from("evidence").select("claim_id,phash").not("phash", "is", null).not("claim_id", "is", null).neq("claim_id", ref).order("created_at", { ascending: false }).limit(2000),
-      this.db.from("listings").select("id,photo_phash").not("photo_phash", "is", null).neq("id", ref).neq("status", "draft").order("created_at", { ascending: false }).limit(2000),
-    ]);
-    const evidence = must(e, "near duplicate evidence") as Array<{ claim_id: string; phash: string }>;
-    const listings = must(l, "near duplicate listings") as Array<{ id: string; photo_phash: string }>;
-    return evidence.find((row) => hamming(row.phash, phash) <= maxDistance)?.claim_id
-      ?? listings.find((row) => hamming(row.photo_phash, phash) <= maxDistance)?.id
-      ?? null;
-  }
 
   async addCheck(c: New<Check>) { return this.ins<Check>("checks", c, "add check"); }
 
