@@ -1,0 +1,18 @@
+name: Live smoke test
+on:
+  workflow_dispatch:
+permissions: { contents: read }
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: denoland/setup-deno@v2
+        with: { deno-version: v2.x }
+      - run: bun install
+      - name: Deno type-check the edge functions
+        run: deno check --node-modules-dir=none supabase/functions/*/index.ts
+        continue-on-error: true
+      - name: Smoke test the live site, functions, ledger and seller flow
+        run: bun scripts/smoke.ts
