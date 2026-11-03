@@ -1,0 +1,242 @@
+{
+  "summary": {
+    "run_at": "2026-11-03T08:37:21.558Z",
+    "cases": 12,
+    "completed": 12,
+    "blocked": 8,
+    "ai_flagged": 0
+  },
+  "results": [
+    {
+      "id": "ai-sapling-1",
+      "type": "claim",
+      "protocol": "tree_planting",
+      "note": "Fully AI-generated planting photo",
+      "images": [
+        "ghost-audit/ai-sapling-1-planting.png"
+      ],
+      "outcome": "consistent",
+      "reasons": [
+        "All checks passed."
+      ],
+      "ai_flag": false,
+      "notes": "Small green seedling with few leaves growing from a mound of dark loose soil outdoors with grass blurred in background.",
+      "counts": {
+        "planting": 1
+      },
+      "paid": true
+    },
+    {
+      "id": "ai-sapling-2",
+      "type": "claim",
+      "protocol": "tree_planting",
+      "note": "AI-generated planting with hands",
+      "images": [
+        "ghost-audit/ai-sapling-2-planting.png"
+      ],
+      "outcome": "consistent",
+      "reasons": [
+        "All checks passed."
+      ],
+      "ai_flag": false,
+      "notes": "Two hands press dark loose soil around a small green sapling planted in open outdoor ground.",
+      "counts": {
+        "planting": 1
+      },
+      "paid": true
+    },
+    {
+      "id": "potted-plant",
+      "type": "claim",
+      "protocol": "tree_planting",
+      "note": "Potted indoor plant passed off as planting",
+      "images": [
+        "ghost-audit/potted-plant-planting.png"
+      ],
+      "outcome": "contradicted",
+      "reasons": [
+        "Muse Spark: Is a young tree or sapling visibly planted in the ground? → no.",
+        "Muse Spark: Is the plant in a pot, bag or indoors rather than in open ground? → yes.",
+        "Muse Spark (low confidence): Does the soil around it look freshly dug or recently planted? → no."
+      ],
+      "ai_flag": false,
+      "notes": "Small green plant in black plastic pot on wooden table indoors, not in open ground.",
+      "counts": {
+        "planting": 1
+      },
+      "paid": false
+    },
+    {
+      "id": "mature-tree",
+      "type": "claim",
+      "protocol": "tree_planting",
+      "note": "Existing mature tree, nothing planted",
+      "images": [
+        "ghost-audit/mature-tree-planting.png"
+      ],
+      "outcome": "contradicted",
+      "reasons": [
+        "Muse Spark: Is a young tree or sapling visibly planted in the ground? → no.",
+        "No sapling was found in the newly planted tree photo.",
+        "Muse Spark (low confidence): Does the soil around it look freshly dug or recently planted? → no."
+      ],
+      "ai_flag": false,
+      "notes": "A very large mature tree with thick trunk stands in a park circle with benches and path. No young sapling or fresh digging visible.",
+      "counts": {
+        "planting": 0
+      },
+      "paid": false
+    },
+    {
+      "id": "shop-shelf",
+      "type": "claim",
+      "protocol": "recycling",
+      "note": "New stock on a shop shelf, not collected waste",
+      "images": [
+        "ghost-audit/shop-shelf-items.png"
+      ],
+      "outcome": "contradicted",
+      "reasons": [
+        "Muse Spark: Do the items look collected/used rather than new stock on a shop shelf? → no."
+      ],
+      "ai_flag": false,
+      "notes": "Shelves full of new soft-drink bottles and cans with price tags in a shop.",
+      "counts": {
+        "items": 138
+      },
+      "paid": false
+    },
+    {
+      "id": "ai-recyclables",
+      "type": "claim",
+      "protocol": "recycling",
+      "note": "AI-generated recyclables",
+      "images": [
+        "ghost-audit/ai-recyclables-items.png"
+      ],
+      "outcome": "consistent",
+      "reasons": [
+        "All checks passed."
+      ],
+      "ai_flag": false,
+      "notes": "Crushed plastic water bottles and dented drink cans scattered on dirt ground outdoors.",
+      "counts": {
+        "items": 30
+      },
+      "paid": true
+    },
+    {
+      "id": "cleanup-two-places",
+      "type": "claim",
+      "protocol": "cleanup",
+      "note": "Before and after from different places",
+      "images": [
+        "ghost-audit/cleanup-two-places-before.png",
+        "ghost-audit/cleanup-two-places-after.png"
+      ],
+      "outcome": "contradicted",
+      "reasons": [
+        "Muse Spark: Do the before and after photos show the same place? → no.",
+        "Muse Spark: Is the place visibly cleaner in the after photo? → no."
+      ],
+      "ai_flag": false,
+      "notes": "Before shows a roadside ditch filled with plastic bottles, bags and wrappers. After shows an empty white-sand beach with ocean and palm trees.",
+      "counts": {
+        "before": 25,
+        "after": 0
+      },
+      "paid": false
+    },
+    {
+      "id": "cleanup-no-change",
+      "type": "claim",
+      "protocol": "cleanup",
+      "note": "After photo still littered",
+      "images": [
+        "ghost-audit/cleanup-no-change-before.png",
+        "ghost-audit/cleanup-no-change-after.png"
+      ],
+      "outcome": "contradicted",
+      "reasons": [
+        "Muse Spark: Is the place visibly cleaner in the after photo? → no.",
+        "Unclear: Do the before and after photos show the same place?",
+        "SAM 3.1 counts as much litter after the cleanup as before."
+      ],
+      "ai_flag": false,
+      "notes": "Both show fenced vacant lots covered with plastic bottles and bags. Foreground piles differ and backgrounds do not match. After photo remains heavily littered.",
+      "counts": {
+        "before": 61,
+        "after": 78
+      },
+      "paid": false
+    },
+    {
+      "id": "lot-wrong-code",
+      "type": "lot",
+      "note": "AI-made jerrycan lot with the wrong code on paper",
+      "challenge": "KMRB",
+      "images": [
+        "ghost-audit/lot-wrong-code.png"
+      ],
+      "outcome": "needs_better_photo",
+      "reasons": [
+        "The code KMRB isn't readable in the photo. Write it on paper and put it in the shot."
+      ],
+      "notes": "Blue and white 20L jerrycans stacked outdoors, dusty and scuffed but mostly capped and intact. Visible count exceeds 20.",
+      "ai_flag": false,
+      "paid": false
+    },
+    {
+      "id": "lot-right-code",
+      "type": "lot",
+      "note": "AI-made jerrycan lot that copies the right code",
+      "challenge": "KMRB",
+      "images": [
+        "ghost-audit/lot-right-code.png"
+      ],
+      "outcome": "listed",
+      "reasons": [
+        "Grade C (empty and clean; disclose the resin type when known; intact if sold for reuse). The buyer's scale sets the amount paid."
+      ],
+      "notes": "Pile of used jerrycans outdoors, dirty and weathered but mostly capped and intact. Likely HDPE.",
+      "ai_flag": false,
+      "paid": true
+    },
+    {
+      "id": "lot-no-code",
+      "type": "lot",
+      "note": "AI-made jerrycan lot with no code at all",
+      "challenge": "KMRB",
+      "images": [
+        "ghost-audit/lot-no-code.png"
+      ],
+      "outcome": "needs_better_photo",
+      "reasons": [
+        "The code KMRB isn't readable in the photo. Write it on paper and put it in the shot."
+      ],
+      "notes": "Pile of HDPE jerrycans in blue black yellow green, dusty dirty, some missing caps outdoors. About 22 visible.",
+      "ai_flag": false,
+      "paid": false
+    },
+    {
+      "id": "replay",
+      "type": "claim",
+      "protocol": "tree_planting",
+      "note": "Same photo submitted again as a new claim",
+      "images": [
+        "ghost-audit/ai-sapling-1-planting.png"
+      ],
+      "first": "unresolved",
+      "outcome": "contradicted",
+      "reasons": [
+        "This photo is identical or near-identical to one used for another claim."
+      ],
+      "ai_flag": false,
+      "notes": "Small green seedling with few leaves growing from mound of dark loose soil outdoors, blurred greenery behind, no pot visible.",
+      "counts": {
+        "planting": 1
+      },
+      "paid": false
+    }
+  ]
+}
