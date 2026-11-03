@@ -5,7 +5,7 @@ Read this before any task. It explains *why* the code looks the way it does, so 
 ## Who and what
 - **Founder:** Miskel Guya, solo founder of **ECO** (a live climate-action app, the "ECO App"). He directs; AI engineers build. He is currently abroad, not in Kenya; a local team can film and line up partners.
 - **This repo:** a fresh, standalone hackathon build, **ECO · Proof of Planet**, written from Oct 26, 2026. None of the pre-existing ECO App code is in it. The video must open by saying what existed before (ECO and the ECO App) and what was built during the event (everything here).
-- **Engineers:** Claude (integration, deploy, live model runs, review, submission copy) and Codex (self-contained tasks). Claude is offline until Monday, Nov 2. A ChatGPT strategist chat reviewed the plan in five rounds; its corrections are already in `docs/CODEX_TASKS.md`.
+- **Team:** the founder directs the build; the team ships small, tested changes.
 
 ## The hackathon
 - **Meta Global AI Developer Hackathon**, Startup track, theme *Build for Your World*. Oct 26 – Nov 4, 2026.
@@ -16,7 +16,7 @@ Read this before any task. It explains *why* the code looks the way it does, so 
   - **Open Weight** → Muse Spark Open (or Glimmer) visibly doing real work, verifiable by the infra partner (Baseten). Our path: `CHAT_PROVIDER=baseten` runs on `meta-models/muse-spark-open-1026`. **Proven live (Nov 2): every Atlas brief is written by Muse Spark Open and the page shows the model.**
   - **Best Creative** → Muse Image or Muse Wonder **in the final experience**. Our path: the Proof Card (C2) and the Ghost Audit / cheat lab. The Proof Card is the only Muse Image users see, so don't drop it silently.
   - **Agentic** → autonomy, effectiveness, usefulness: the WhatsApp agent working through 23 tools, the bidding round (K2), scheduled follow-ups (C5).
-  - **Most Viral** → X engagement until Nov 8 EOD (Claude + founder, after submission).
+  - **Most Viral** → X engagement until Nov 8 EOD (founder, after submission).
   - **Community Vote** → Nov 9–16.
 - Uses Meta's free developer credits: Meta may use what's sent to its models. This is disclosed in the consent message, site and README. Keep it.
 
@@ -44,13 +44,13 @@ Business model: fees, not token price — 2% marketplace + 1% escrow on Loop, 1%
 - Cut-line: no Proof Card / follow-ups / bidding expansion until a **real-model** claim survives intake, partial settlement and duplicate replay **live**. After that, C2 (Proof Card) matters for the Creative prize — schedule it, don't drop it.
 
 ## Where we are (Oct 28; see `docs/STATUS.md` for the latest)
-Live: Supabase backend, website, Meta + Baseten keys. 56 tests. The agent works live in Swahili and English; Witness correctly refused a snowy "Nairobi" photo and a reused photo. Open: SAM returns 0 (parser), Loop never run live, Spark Open never run live, verification latency 20–35 s, WhatsApp not connected. Details and how to test: `docs/HANDOFF.md`.
+Live: Supabase backend, website, Meta + Baseten keys. 56 tests. The agent works live in Swahili and English; Witness correctly refused a snowy "Nairobi" photo and a reused photo. Open: SAM returns 0 (parser), Loop never run live, Spark Open never run live, verification latency 20–35 s, WhatsApp not connected. 
 
 ## Where we are going (what "done" looks like on Nov 3)
 1. **A 3-minute demo that is genuinely cool to watch:** a farmer on WhatsApp lists rice husk (code on paper) → Meta AI identifies and grades it, SAM draws boxes → a briquette maker's bid wins → escrow → delivery → the buyer weighs 450 of 500 kg on `intake.html` → farmer paid, rest refunded, fees feed the Reserve → farmer spends ECOIN at a shop with a Glance code → every step is visible on the public ledger and the receipt shows which Meta model did what (K3). Plus one cheat attempt failing (cheat lab).
 2. **Every Meta model visibly earning its place:** Muse Spark 1.3 (agent, grading, disputes, Atlas), SAM 3.1 (counts + boxes on Evidence Files), Muse Spark Open (same agent, open weights), Muse Image (Proof Card + Ghost Audit fakes), WhatsApp Cloud API.
 3. **Evidence over claims:** the evaluation (C6) with false-accept/false-reject numbers, the Ghost Audit results, the ledger chain check and fingerprint (C3).
 4. **Real people if at all possible:** a real briquette maker/recycler and a real shop in Kenya, filmed by the local team. Never fake them.
-5. Submission text, video, X post and the deck: Claude + founder on Monday Nov 2.
+5. Submission text, video, X post and the deck: Monday Nov 2.
 
 When a choice is unclear, pick what makes the live demo more trustworthy and more watchable, write the question in `docs/STATUS.md`, and keep going.

@@ -1,4 +1,4 @@
-# Status — Nov 3, 2026, code freeze (Claude)
+# Status — Nov 3, 2026, code freeze
 
 - **Live smoke test** (`bun scripts/smoke.ts`, workflow "Live smoke test"): 27/27 passed on `9e03bb7`.
   Site pages all 200; public views readable; ledger chain intact (4 entries); Atlas brief written by `meta-models/muse-spark-open-1026`;
@@ -11,7 +11,7 @@
 - **Not done:** no Loop trade has completed live yet (0 trades). The demo trade is filmed Nov 3 between two team members and must be labelled as a demo.
   No accuracy numbers: the Ghost Audit and the C6 evaluation have not been run.
 
-# Status — Nov 2, 2026 (Claude)
+# Status — Nov 2, 2026
 
 - **Live:** agentic photo scout (`_core/scout.ts`). A photo with no context is identified by Muse Spark; rules route it. Verified live:
   cow dung photo → "manure / compost / biogas for farmers, compost makers, biogas plants — how many kg?"; street litter → cleanup claim opened

@@ -1,6 +1,6 @@
-# Working on ECO · Proof of Planet
+# Contributing to ECO · Proof of Planet
 
-Two AI engineers share this repo: **Claude** (integration, deployment, live model runs, review) and **Codex** (self-contained tasks from `docs/CODEX_TASKS.md`). The founder decides; nobody merges to `main` without passing tests.
+The founder decides; nobody merges to `main` without passing tests.
 
 ## Rules that never bend
 - **The ECOIN rule.** **Every ECOIN is minted by a verified climate action, and that verified action is what backs it.** We mint ECOIN on every verified climate action, and only then: no verified action, no ECOIN. Each coin on the public ledger links to the Evidence File of the action that minted it.
@@ -30,7 +30,7 @@ bun run build:web && git diff --exit-code web/js/ledger.js
 Deno type-check (if Deno is available): `deno check --node-modules-dir=none supabase/functions/*/index.ts`.
 
 ## How to deliver a task
-1. Branch `codex/<task-id>` (Codex) or `claude/<task-id>` (Claude).
+1. Branch `feature/<task-id>`.
 2. Implement exactly the task's acceptance criteria; add tests for every rule.
 3. Update `MemoryStore` **and** `SupabaseStore` **and** the migration when you add storage.
 4. PR title `[<task-id>] <summary>`; body lists what changed, how it was tested, and anything left undone. End with the tests' pass count.
