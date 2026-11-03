@@ -17,7 +17,7 @@ jobs:
           HOURS: ${{ inputs.hours }}
         run: |
           START=$(date -u -d "-${HOURS} hours" +%Y-%m-%dT%H:%M:%SZ)
-          SQL="select timestamp, event_message from function_logs where event_message like '%${MATCH}%' order by timestamp desc limit 40"
+          SQL="SELECT timestamp, event_message FROM logs WHERE event_message LIKE '%${MATCH}%' ORDER BY timestamp DESC LIMIT 40"
           curl -sS -G "https://api.supabase.com/v1/projects/$REF/analytics/endpoints/logs" \
             -H "Authorization: Bearer $TOKEN" --data-urlencode "sql=$SQL" --data-urlencode "iso_timestamp_start=$START" \
             | sed -E 's/[0-9]{9,}/[redacted]/g; s/EAA[A-Za-z0-9]+/[token]/g' | python3 -c "import sys,json; d=json.load(sys.stdin); [print(r.get('timestamp'), str(r.get('event_message'))[:600]) for r in d.get('result',[])] or print(json.dumps(d)[:800])"
