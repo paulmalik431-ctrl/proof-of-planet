@@ -39,6 +39,7 @@ await safe("trades", async () => {
   for (const x of t) by[x.status] = (by[x.status] ?? 0) + 1;
   record("trades", true, `${t.length} trades by status ${JSON.stringify(by)}`);
 });
+await safe("adoptions view", async () => { const a = await rest("public_adoptions?select=*"); record("adoptions view", Array.isArray(a), `${a.length} adoptions`); });
 await safe("listings", async () => { const l = await rest("public_listings?select=*"); record("listings", true, `${l.length} listings`); });
 await safe("claims", async () => {
   const c = await rest("public_claims?select=*");
@@ -85,7 +86,7 @@ const say = async (body: Record<string, unknown>) => {
 await safe("seller: consent", async () => {
   const a = await say({ text: "Hi" });
   const b = await say({ text: "Yes" });
-  record("seller: consent + welcome", /YES/.test(a) && /photo|ECOIN/i.test(b), "");
+  record("seller: consent + welcome (asks role)", /YES/.test(a) && /Who are you today/.test(b), "");
 });
 await safe("seller: photo scout (cow dung)", async () => {
   let img: Response | null = null;
