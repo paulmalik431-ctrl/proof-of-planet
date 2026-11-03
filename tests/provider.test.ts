@@ -52,3 +52,15 @@ test("empty SAM SSE text logs a bounded raw response sample", async () => {
     log.mockRestore();
   }
 });
+test("model calls: a 429 then a success is retried; a 400 is not", async () => {
+    let n = 0;
+    const ok = () => new Response(JSON.stringify({ choices: [{ message: { role: "assistant", content: "hi" }, finish_reason: "stop" }] }), { status: 200 });
+    const flaky = new MetaClient("k", { fetch: (async () => (++n === 1 ? new Response("slow down", { status: 429, headers: { "retry-after": "0" } }) : ok())) as typeof fetch });
+    const r = await flaky.chat({ messages: [{ role: "user", content: "x" }] });
+    expect(r.message.content).toBe("hi");
+    expect(n).toBe(2);
+    let m = 0;
+    const bad = new MetaClient("k", { fetch: (async () => { m++; return new Response("bad", { status: 400 }); }) as typeof fetch });
+    await expect(bad.chat({ messages: [{ role: "user", content: "x" }] })).rejects.toThrow();
+    expect(m).toBe(1);
+  });

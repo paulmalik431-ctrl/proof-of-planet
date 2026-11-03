@@ -49,6 +49,7 @@ export interface ModelCallTrace {
   endpoint: string;
   ms: number;
   ok: boolean;
+  attempt?: number;
 }
 
 export class MetaClient {
@@ -77,18 +78,26 @@ export class MetaClient {
   private async post(endpoint: string, model: string, body: BodyInit, headers: Record<string, string>, via?: ChatProvider): Promise<Response> {
     this.guard(model);
     if (!via && !this.apiKey) throw new MetaError(`${model} needs the Meta Model API key (MODEL_API_KEY).`, 503);
-    const t0 = Date.now();
     let res: Response | null = null;
-    try {
-      res = await this.fetch(`${via?.base ?? this.base}${endpoint}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${via?.key ?? this.apiKey}`, ...headers },
-        body,
-      });
-    } catch {
-      res = null;
+    // Up to 3 attempts: a network failure, rate limit (429) or server error (5xx) is retried with a short backoff.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt) {
+        const wait = Math.min(5000, Number(res?.headers.get("retry-after") ?? 0) * 1000 || 1000 * 2 ** attempt);
+        await new Promise((r) => setTimeout(r, wait));
+      }
+      const t0 = Date.now();
+      try {
+        res = await this.fetch(`${via?.base ?? this.base}${endpoint}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${via?.key ?? this.apiKey}`, ...headers },
+          body,
+        });
+      } catch {
+        res = null;
+      }
+      this.onCall?.({ model, endpoint, ms: Date.now() - t0, ok: !!res?.ok, ...(attempt ? { attempt: attempt + 1 } : {}) });
+      if (res && (res.ok || (res.status !== 429 && res.status < 500))) break;
     }
-    this.onCall?.({ model, endpoint, ms: Date.now() - t0, ok: !!res?.ok });
     if (!res) throw new MetaError("Could not reach the Meta Model API.");
     if (!res.ok) {
       const raw = await res.text().catch(() => "");

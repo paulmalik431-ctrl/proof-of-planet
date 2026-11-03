@@ -33,6 +33,12 @@ Deno.serve(async (req) => {
   };
   const form = (o: Record<string, string>) => ({ method: "POST", body: new URLSearchParams(o) });
 
+  if (q.get("errors")) {
+    const { SupabaseStore } = await import("../_shared/supabase-store.ts");
+    const db = new SupabaseStore().db;
+    const { data } = await db.from("briefs").select("body, created_at").eq("kind", "error:whatsapp").order("created_at", { ascending: false }).limit(5);
+    return json({ recent_errors: data ?? [] });
+  }
   if (q.get("find")) {
     await call("owned_accounts", `${g}/${BUSINESS_ID}/owned_whatsapp_business_accounts?fields=id,name,phone_numbers{id,${NUMBER_FIELDS}}&${auth}`);
   }

@@ -46,6 +46,8 @@ Deno.serve(async (req) => {
         for (const r of replies) await sendText(wa, m.from, r);
       } catch (e) {
         console.error("whatsapp message failed", m.id, String(e));
+        // Keep the reason (numbers redacted) so it can be read back through wa-setup?errors=1 while testing.
+        await deps.store.db.from("briefs").insert({ kind: "error:whatsapp", body: { error: String(e).replace(/\d{9,}/g, "[n]").replace(/EAA[A-Za-z0-9]+/g, "[token]").slice(0, 500), stack: String((e as Error)?.stack ?? "").replace(/\d{9,}/g, "[n]").slice(0, 800) } }).then(() => undefined, () => undefined);
         await sendText(wa, m.from, "Sorry, something went wrong on our side. Please try again in a minute.").catch(() => undefined);
       }
     }
